@@ -4,7 +4,11 @@
  * Express Dependencies
  */
 var express = require('express');
+var fs = require('fs');
+var bodyParser = require('body-parser');
 var app = express();
+var jsonParser = bodyParser.json()
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
 var port = 3000;
 
 /*
@@ -59,6 +63,28 @@ app.set('view engine', 'handlebars');
 // Index Page
 app.get('/', function(request, response, next) {
     response.render('index');
+});
+
+app.get('/fileListing', function(request, response, next){
+    var usbPath = '/home/patrick/Documents/SeniorDesign/SampleUSB';
+    var path = usbPath + request.params.path;
+    fs.readdir(path,function(err,list){
+        if(!err){
+            var files = [];
+            for (var i = 0; i < list.length; i++) {
+                var fileData = {};
+                fileData.filename = list[i];
+                var stats = fs.statSync(path + '/' + list[i]);
+                fileData.isDirectory = stats.isDirectory();
+                fileData.size = stats.size;
+                files.push(fileData);
+            };
+            response.jsonp({'files':files});
+        }
+        else{
+            response.jsonp({'err':'problem with filepath'});
+        }
+    });
 });
 
 
