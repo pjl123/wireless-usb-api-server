@@ -66,8 +66,9 @@ app.get('/', function(request, response, next) {
 });
 
 app.get('/fileListing', function(request, response, next){
-    var usbPath = '/home/patrick/Documents/SeniorDesign/SampleUSB';
-    var path = usbPath + request.params.path;
+    var usbPath = './';
+    var path = usbPath + request.query.path;
+    console.log(path);
     fs.readdir(path,function(err,list){
         if(!err){
             var files = [];
