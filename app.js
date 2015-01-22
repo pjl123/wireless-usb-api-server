@@ -12,6 +12,14 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false })
 var port = 3000;
 
 /*
+ * Custom API Dependencies
+ */
+var auth = require('./modules/auth-handler');
+var fileDelivery = require('./modules/file-delivery');
+var users = require('./modules/user-handler');
+var network = require('./modules/network-handler');
+
+/*
  * Use Handlebars for templating
  */
 var exphbs = require('express3-handlebars');
@@ -65,28 +73,52 @@ app.get('/', function(request, response, next) {
     response.render('index');
 });
 
+/*
+ * Authentication Module
+ */
+
+
+/*
+ * File Delivery Module
+ */
+
+// File path included in request query
 app.get('/fileListing', function(request, response, next){
-    var usbPath = './';
-    var path = usbPath + request.query.path;
-    console.log(path);
-    fs.readdir(path,function(err,list){
-        if(!err){
-            var files = [];
-            for (var i = 0; i < list.length; i++) {
-                var fileData = {};
-                fileData.filename = list[i];
-                var stats = fs.statSync(path + '/' + list[i]);
-                fileData.isDirectory = stats.isDirectory();
-                fileData.size = stats.size;
-                files.push(fileData);
-            };
-            response.jsonp({'files':files});
-        }
-        else{
-            response.jsonp({'err':'problem with filepath'});
-        }
+    // TODO check for authenticated request
+    fileDelivery.getFileListing(request, function(responseData){
+        response.jsonp(responseData);
     });
 });
+
+/*
+ * User Module
+ */
+
+// Update user permissions
+app.post('/users/:id', jsonParser, function(request, response, next){
+    var accessToken = request.query.accessToken;
+    var id = request.params.id;
+
+    // request must be authenticated and come from an admin
+    if(auth.isAuthenticated(accessToken)){
+        if(users.isAdmin(auth.getOwner(accessToken))){
+            users.updateUser(id, request.body, function(responseData){
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.jsonp({'err':'user with given id: \"' + id + '\" is not admin'});
+        }
+    }
+    else{
+        response.jsonp({'err':'call not authenticated, must request access token'});
+    }
+});
+
+
+ /*
+  * Network Module
+  */
 
 
 /*
