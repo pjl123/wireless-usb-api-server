@@ -77,6 +77,14 @@ app.get('/', function(request, response, next) {
  * Authentication Module
  */
 
+app.get('/requestAccessToken', function(request, response, next){
+    auth.requestAccessToken(request.query.id, request.query.key, function(responseData){
+        if(responseData.err !== undefined){
+            response.status(400);
+        }
+        response.jsonp(responseData);
+    });
+});
 
 /*
  * File Delivery Module
@@ -84,20 +92,37 @@ app.get('/', function(request, response, next) {
 
 // Relative file path included in request query
 app.get('/fileListing', function(request, response, next){
-    // TODO check for authenticated request
-    fileDelivery.getFileListing(request.query.path, function(responseData){
-        // TODO check for error and set status code
-        response.jsonp(responseData);
-    });
+    if(auth.isAuthenticated(request.query.accessToken)){
+        fileDelivery.getFileListing(request.query.path, function(responseData){
+            if(responseData.err !== undefined){
+                response.status(400);
+            }
+            response.jsonp(responseData);
+        });
+    }
+    else{
+        response.status(401);
+        response.jsonp({'err':'Please request new access token.'});
+    }
 });
 
 // Relative file path included in request query
 app.get('/getSingleFile', function(request, response, next){
-    // TODO check for authenticated request
-    fileDelivery.getSingleFile(request.query.path, function(responseData){
-        // TODO check for error and set status code
-        responseData.pipe(response);
-    });
+    if(auth.isAuthenticated(request.query.accessToken)){
+        fileDelivery.getSingleFile(request.query.path, function(responseData){
+            if(responseData.err === undefined){
+                responseData.pipe(response);
+            }
+            else{
+                response.status(400);
+                response.jsonp(responseData);
+            }
+        });
+    }
+    else{
+        response.status(401);
+        response.jsonp({'err':'Please request new access token.'});
+    }
 });
 
 /*
@@ -106,22 +131,20 @@ app.get('/getSingleFile', function(request, response, next){
 
 // Update user permissions
 app.post('/users/:id', jsonParser, function(request, response, next){
-    var accessToken = request.query.accessToken;
-    var id = request.params.id;
-
-    // request must be authenticated and come from an admin
-    if(auth.isAuthenticated(accessToken)){
-        if(users.isAdmin(auth.getOwner(accessToken))){
-            users.updateUser(id, request.body, function(responseData){
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.jsonp({'err':'user with given id: \"' + id + '\" is not admin'});
-        }
+    if(auth.isAuthenticated(request.query.accessToken)){
+        users.updateUser(request.params.id, request.body, function(responseData){
+            if(responseData.err === undefined){
+                response.status(400);
+            }
+            else{
+                response.status(201);
+            }
+            response.jsonp(responseData);
+        });
     }
     else{
-        response.jsonp({'err':'call not authenticated, must request access token'});
+        response.status(401);
+        response.jsonp({'err':'Please request new access token.'});
     }
 });
 

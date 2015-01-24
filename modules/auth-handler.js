@@ -6,14 +6,17 @@
 
 var users = require('./user-handler');
 
-// TODO implement
-exports.requestAccessToken = function (argument) {
-	// body...
+exports.requestAccessToken = function (id, key, callback) {
+	// TODO compare key with our key and generate token
+	// then set token to the given user id in database
+
+	return callback({'accessToken':'Open Sesame'});
 };
 
-// TODO implement
-exports.isAuthenticated = function (argument) {
-	// body...
+exports.isAuthenticated = function (accessToken) {
+	// TODO lookup user in database using accessToken
+
+	return true;
 }
 
 // TODO implement
