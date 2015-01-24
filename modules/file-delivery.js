@@ -8,18 +8,20 @@
 var usb = require('./usb-handler');
 var users = require('./user-handler');
 
-exports.getFileListing = function(request, callback){
-	var relPath = request.query.path;
+exports.getFileListing = function(relPath, callback){
 	// TODO verify this user has access to the given path
 
-	usb.getFileListing(relPath, function(fileData){
-		return callback(fileData);
+	usb.getFileListing(relPath, function(data){
+		return callback(data);
 	});
 };
 
-// TODO implement
-exports.getSingleFile = function (argument){
-	// body...
+exports.getSingleFile = function (relPath, callback){
+	// TODO verify this user has access to file
+
+	usb.getSingleFile(relPath, function(data){
+		return callback(data);
+	});
 };
 
 // TODO implement

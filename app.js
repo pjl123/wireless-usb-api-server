@@ -82,11 +82,21 @@ app.get('/', function(request, response, next) {
  * File Delivery Module
  */
 
-// File path included in request query
+// Relative file path included in request query
 app.get('/fileListing', function(request, response, next){
     // TODO check for authenticated request
-    fileDelivery.getFileListing(request, function(responseData){
+    fileDelivery.getFileListing(request.query.path, function(responseData){
+        // TODO check for error and set status code
         response.jsonp(responseData);
+    });
+});
+
+// Relative file path included in request query
+app.get('/getSingleFile', function(request, response, next){
+    // TODO check for authenticated request
+    fileDelivery.getSingleFile(request.query.path, function(responseData){
+        // TODO check for error and set status code
+        responseData.pipe(response);
     });
 });
 

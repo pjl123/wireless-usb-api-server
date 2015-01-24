@@ -5,7 +5,7 @@
 */
 
 // TODO update to the actual path on the Raspberry Pi
-var usbPath = '.';
+var usbPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/sample_files';
 var fs = require('fs');
 
 exports.getFileListing = function(relPath, callback) {
@@ -36,9 +36,14 @@ exports.getFileListing = function(relPath, callback) {
   });
 };
 
-// TODO implement
-exports.getSingleFile = function (argument){
-	// body...
+
+exports.getSingleFile = function (relPath, callback){
+  if((relPath.trim()).length === 0){
+    return callback({'err':'no filepath given'});
+  }
+
+  var filepath = usbPath + '/' + relPath;
+  return callback(fs.createReadStream(filepath));
 };
 
 // TODO implement
