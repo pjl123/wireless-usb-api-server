@@ -29,6 +29,14 @@ exports.getManyFiles = function (argument) {
 	// body...
 };
 
+exports.setupWebStream = function (relPath, callback){
+	// TODO verify user has access to the file
+
+	usb.setupWebStream(relPath, function(data){
+		return callback(data);
+	});
+};
+
 // TODO implement
 exports.createFileStream = function (argument) {
 	// body...

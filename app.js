@@ -125,6 +125,21 @@ app.get('/getSingleFile', function(request, response, next){
     }
 });
 
+app.get('/setupWebStream', function(request, response, next){
+    if(auth.isAuthenticated(request.query.accessToken)){
+        fileDelivery.setupWebStream(request.query.path, function(responseData){
+            if(responseData.err !== undefined){
+                response.status(400);
+            }
+            response.jsonp(responseData);
+        });
+    }
+    else{
+        response.status(401);
+        response.jsonp({'err':'Please request new access token.'});
+    }
+});
+
 /*
  * User Module
  */

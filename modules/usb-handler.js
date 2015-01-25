@@ -6,6 +6,8 @@
 
 // TODO update to the actual path on the Raspberry Pi
 var usbPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/sample_files';
+// TODO set path of Raspberry Pi for serving files
+var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-file-server/temp_files';
 var fs = require('fs');
 
 exports.getFileListing = function(relPath, callback) {
@@ -49,6 +51,21 @@ exports.getSingleFile = function (relPath, callback){
 // TODO implement
 exports.getManyFiles = function (argument) {
 	// body...
+};
+
+exports.setupWebStream = function (relPath, callback){
+  if((relPath.trim()).length === 0){
+    return callback({'err':'no filepath given'});
+  }
+
+  var filepath = usbPath + '/' + relPath;
+  var temp = relPath.split('/');
+  var filename = temp[temp.length - 1];
+
+  // TODO check file size before sending to make sure it's not too large.
+  // Also make sure the file does not already exist there.
+  fs.createReadStream(filepath).pipe(fs.createWriteStream(serverPath + '/' + filename));
+  return callback({'filename':filename});
 };
 
 // TODO implement
