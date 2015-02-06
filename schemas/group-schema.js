@@ -5,7 +5,9 @@ var mongoose = require('mongoose');
 var groupSchema = mongoose.Schema({
 	name: {
 		type: String,
-		required: true
+		required: true,
+		unique: true,
+		index: true
 	},
 	canUpload: {
 		type: Boolean,
@@ -14,6 +16,12 @@ var groupSchema = mongoose.Schema({
 	canDownload: {
 		type: Boolean
 		default: false;
+	},
+	users: {
+		type: [mongoose.Schema.Types.ObjectId]
+	},
+	files: {
+		type: [mongoose.Schema.Types.ObjectId]
 	}
 });
 

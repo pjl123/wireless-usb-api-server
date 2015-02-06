@@ -73,7 +73,7 @@ app.set('view engine', 'handlebars');
 mongoose.connect('mongodb://localhost/wireless-usb');
 var conn = mongoose.connection;
 conn.on('error', function (callback){
-    console.error('Could not connect to Mongo!\nExiting now!');
+    console.error('Could not connect to Mongo! Contact your admin to start it.\nExiting now!');
     process.exit(1);
 }); 
 conn.once('open', function (callback) {
@@ -170,14 +170,14 @@ app.get('/setupWebStream', function (request, response, next){
 app.post('/users', jsonParser, function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            users.createNewUser(request.query.accessToken, request.body, function (result){
-                if(responseData.err === undefined){
+            users.createNewUser(userId, request.body, function (responseData){
+                if(responseData.err !== undefined){
                     response.status(400);
                 }
                 else{
                     response.status(201);
                 }
-                response.jsonp(result);
+                response.jsonp(responseData);
             });
         }
         else{
@@ -187,12 +187,12 @@ app.post('/users', jsonParser, function (request, response, next){
     });
 });
 
-// Update user permissions
-app.post('/users/:id', jsonParser, function (request, response, next){
+// Get single user by id
+app.get('/users/:id', function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            users.updateUser(request.params.id, request.body, function (responseData){
-                if(responseData.err === undefined){
+            users.getUser(userId, request.params.id, function (responseData){
+                if(responseData.err !== undefined){
                     response.status(400);
                 }
                 else{
@@ -208,6 +208,80 @@ app.post('/users/:id', jsonParser, function (request, response, next){
     });
 });
 
+// Get all users
+app.get('/users', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            users.getAllUsers(userId, function (err, responseData){
+                if(err){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
+
+// Delete user
+app.delete('/users/:id', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            users.deleteUser(userId, request.params.id, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
+
+// Update user fields :id is the Mongo ObjectId
+app.post('/users/:id', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            users.updateUser(userId, request.params.id, request.body, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
+
+// Create group
+
+// Get group
+
+// Get all groups
+
+// Delete group
+
+// Update group
+
+// Add user to group
 
  /*
   * Network Module

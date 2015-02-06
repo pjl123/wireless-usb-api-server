@@ -5,6 +5,7 @@
  */
 
 var users = require('./user-handler');
+var key = 'test';
 
 exports.requestAccessToken = function (id, key, callback) {
 	// TODO compare key with our key and generate token

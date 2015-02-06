@@ -5,7 +5,8 @@ var mongoose = require('mongoose');
 var userSchema = mongoose.Schema({
 	name: {
 		type: String,
-		required: true
+		required: true,
+		unique: true
 	},
 	accessToken: {
 		type: String
@@ -23,7 +24,7 @@ var userSchema = mongoose.Schema({
 		default: false
 	},
 	groups: {
-		[mongoose.Schema.Types.ObjectId]
+		type: [mongoose.Schema.Types.ObjectId]
 	}
 });
 
