@@ -5,7 +5,9 @@
  */
 
 var userSchema = require('../schemas/user-schema');
+var groupSchema = require('../schemas/group-schema');
 var User = userSchema.User;
+var Group = groupSchema.Group;
 
 exports.isAdmin = function (userId, callback) {
 	User.findOne({ '_id': userId }, 'isAdmin', function (err, user){
