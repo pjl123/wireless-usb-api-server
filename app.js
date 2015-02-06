@@ -22,6 +22,9 @@ var fileDelivery = require('./modules/file-delivery');
 var users = require('./modules/user-handler');
 var network = require('./modules/network-handler');
 
+// Mongoose Schemas
+var User = require('./schemas/user-schema').User;
+
 /*
  * Use Handlebars for templating
  */
@@ -78,6 +81,19 @@ conn.on('error', function (callback){
 }); 
 conn.once('open', function (callback) {
     console.log('Connected to Mongo!');
+    var admin = new User({
+        name: 'admin',
+        accessToken: 'foo',
+        isAdmin: true
+    });
+    admin.save(function(err, admin){
+        if(!err){
+            console.log('Created admin:\n' + admin);
+        }
+        else{
+            console.log('admin exists already');
+        }
+    });
 });
 
 /*

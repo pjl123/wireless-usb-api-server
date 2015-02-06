@@ -11,11 +11,11 @@ var groupSchema = mongoose.Schema({
 	},
 	canUpload: {
 		type: Boolean,
-		default: false;
+		default: false
 	},
 	canDownload: {
-		type: Boolean
-		default: false;
+		type: Boolean,
+		default: false
 	},
 	users: {
 		type: [mongoose.Schema.Types.ObjectId]
