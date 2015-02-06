@@ -7,13 +7,16 @@ var express = require('express');
 var fs = require('fs');
 var bodyParser = require('body-parser');
 var app = express();
-var jsonParser = bodyParser.json()
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
+var jsonParser = bodyParser.json();
+var urlencodedParser = bodyParser.urlencoded({ extended: false });
+var mongoose = require('mongoose');
 var port = 3000;
 
 /*
  * Custom API Dependencies
  */
+
+// Custom Modules
 var auth = require('./modules/auth-handler');
 var fileDelivery = require('./modules/file-delivery');
 var users = require('./modules/user-handler');
@@ -63,13 +66,26 @@ if (process.env.NODE_ENV === 'production') {
 // Set Handlebars
 app.set('view engine', 'handlebars');
 
+/*
+ * Connect to the mongo database
+ */
 
+mongoose.connect('mongodb://localhost/wireless-usb');
+var conn = mongoose.connection;
+conn.on('error', function (callback){
+    console.error('Could not connect to Mongo!\nExiting now!');
+    process.exit(1);
+}); 
+conn.once('open', function (callback) {
+    console.log('Connected to Mongo!');
+});
 
 /*
  * Routes
  */
+
 // Index Page
-app.get('/', function(request, response, next) {
+app.get('/', function (request, response, next) {
     response.render('index');
 });
 
@@ -77,8 +93,8 @@ app.get('/', function(request, response, next) {
  * Authentication Module
  */
 
-app.get('/requestAccessToken', function(request, response, next){
-    auth.requestAccessToken(request.query.id, request.query.key, function(responseData){
+app.get('/requestAccessToken', function (request, response, next){
+    auth.requestAccessToken(request.query.id, request.query.key, function (responseData){
         if(responseData.err !== undefined){
             response.status(400);
         }
@@ -91,76 +107,105 @@ app.get('/requestAccessToken', function(request, response, next){
  */
 
 // Relative file path included in request query
-app.get('/fileListing', function(request, response, next){
-    if(auth.isAuthenticated(request.query.accessToken)){
-        fileDelivery.getFileListing(request.query.path, function(responseData){
-            if(responseData.err !== undefined){
-                response.status(400);
-            }
-            response.jsonp(responseData);
-        });
-    }
-    else{
-        response.status(401);
-        response.jsonp({'err':'Please request new access token.'});
-    }
+app.get('/fileListing', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            fileDelivery.getFileListing(request.query.path, userId, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
 });
 
 // Relative file path included in request query
-app.get('/getSingleFile', function(request, response, next){
-    if(auth.isAuthenticated(request.query.accessToken)){
-        fileDelivery.getSingleFile(request.query.path, function(responseData){
-            if(responseData.err === undefined){
-                responseData.pipe(response);
-            }
-            else{
-                response.status(400);
-                response.jsonp(responseData);
-            }
-        });
-    }
-    else{
-        response.status(401);
-        response.jsonp({'err':'Please request new access token.'});
-    }
+app.get('/getSingleFile', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            fileDelivery.getSingleFile(request.query.path, function (responseData){
+                if(responseData.err === undefined){
+                    responseData.pipe(response);
+                }
+                else{
+                    response.status(400);
+                    response.jsonp(responseData);
+                }
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
 });
 
-app.get('/setupWebStream', function(request, response, next){
-    if(auth.isAuthenticated(request.query.accessToken)){
-        fileDelivery.setupWebStream(request.query.path, function(responseData){
-            if(responseData.err !== undefined){
-                response.status(400);
-            }
-            response.jsonp(responseData);
-        });
-    }
-    else{
-        response.status(401);
-        response.jsonp({'err':'Please request new access token.'});
-    }
+app.get('/setupWebStream', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            fileDelivery.setupWebStream(request.query.path, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
 });
 
 /*
  * User Module
  */
 
+// Create a new user
+app.post('/users', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            users.createNewUser(request.query.accessToken, request.body, function (result){
+                if(responseData.err === undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(201);
+                }
+                response.jsonp(result);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
+
 // Update user permissions
-app.post('/users/:id', jsonParser, function(request, response, next){
-    if(auth.isAuthenticated(request.query.accessToken)){
-        users.updateUser(request.params.id, request.body, function(responseData){
-            if(responseData.err === undefined){
-                response.status(400);
-            }
-            else{
-                response.status(201);
-            }
-            response.jsonp(responseData);
-        });
-    }
-    else{
-        response.status(401);
-        response.jsonp({'err':'Please request new access token.'});
-    }
+app.post('/users/:id', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            users.updateUser(request.params.id, request.body, function (responseData){
+                if(responseData.err === undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
 });
 
 

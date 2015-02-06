@@ -7,7 +7,7 @@
     "body-parser": "~1.10.1",
     "express3-handlebars": "0.4.x",
     "mongo": "*",
-    "monk": "*"
+    "mongoose": "*"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
