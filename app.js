@@ -186,7 +186,7 @@ app.get('/setupWebStream', function (request, response, next){
 app.post('/users', jsonParser, function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            users.createNewUser(userId, request.body, function (responseData){
+            users.createUser(userId, request.body, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }

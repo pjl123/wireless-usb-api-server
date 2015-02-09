@@ -117,7 +117,7 @@ exports.updateUser = function (userId, updateId, userObj, callback) {
 			}
 
 			// Only fields and admin can change
-			if(userId !== updateId){
+			if(user.isAdmin){
 				if(userObj.isAdmin !== undefined){
 					user.isAdmin = userObj.isAdmin;
 				}
