@@ -27,7 +27,7 @@ exports.getUserByAccessToken = function (accessToken, callback){
 	});
 };
 
-exports.createUser = function (userId, userObj, callback) {
+exports.createNewUser = function (userId, userObj, callback) {
 	exports.isAdmin(userId, function (result){
 		if(result){
 			console.log(userObj);
