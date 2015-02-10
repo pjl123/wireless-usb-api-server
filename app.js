@@ -20,6 +20,7 @@ var port = 3000;
 var auth = require('./modules/auth-handler');
 var fileDelivery = require('./modules/file-delivery');
 var users = require('./modules/user-handler');
+var groups = require('./modules/group-handler');
 var network = require('./modules/network-handler');
 
 // Mongoose Schemas
@@ -207,8 +208,8 @@ app.post('/users', jsonParser, function (request, response, next){
 app.get('/users/:id', function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            users.getUser(userId, request.params.id, function (responseData){
-                if(responseData.err !== undefined){
+            users.getUser(userId, request.params.id, function (err, responseData){
+                if(err){
                     response.status(400);
                 }
                 else{
@@ -287,15 +288,114 @@ app.post('/users/:id', jsonParser, function (request, response, next){
     });
 });
 
+/*
+ * Group Module
+ */
+
 // Create group
+app.post('/groups', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.createGroup(userId, request.body, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(201);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
 
 // Get group
+app.get('/groups/:id', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.getGroup(userId, request.params.id, function (err, responseData){
+                if(err){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
 
 // Get all groups
+app.get('/groups', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.getAllGroups(userId, function (err, responseData){
+                if(err){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
 
 // Delete group
+app.delete('/groups/:id', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.deleteGroup(userId, request.params.id, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
 
 // Update group
+app.post('/groups/:id', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.updateGroup(userId, request.params.id, request.body, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
 
 // Add user to group
 

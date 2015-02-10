@@ -5,9 +5,9 @@
  */
 
 var userSchema = require('../schemas/user-schema');
-var groupSchema = require('../schemas/group-schema');
 var User = userSchema.User;
-var Group = groupSchema.Group;
+
+var groups = require('./group-handler');
 
 exports.isAdmin = function (userId, callback) {
 	User.findOne({ '_id': userId }, 'isAdmin', function (err, user){
@@ -144,32 +144,23 @@ exports.updateUser = function (userId, updateId, userObj, callback) {
 	});
 };
 
-//TODO implement
-exports.createGroup = function (argument) {
-	// body...
-};
+exports.getGroupsByUser = function (userId, targetId, callback){
 
-//TODO implement
-exports.getGroup = function (argument) {
-	// body...
-};
+}
 
-//TODO implement
-exports.getAllGroups = function (argument) {
-	// body...
-};
+exports.addGroupToUser = function (userId, targetId, groupId, callback){
 
-//TODO implement
-exports.deleteGroup = function (argument) {
-	// body...
-};
+}
 
-//TODO implement
-exports.updateGroup = function (argument) {
-	// body...
-};
-
-//TODO implement
-exports.addUserToGroup = function (argument) {
-	// body...
-};
+exports.addManyGroupsToUser = function (userId, targetId, groupIds, callback){
+	exports.isAdmin(userId, function (result){
+		if(result){
+			for (var i = 0; i < groupIds.length; i++) {
+				
+			};
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "POST /addManyGroupsToUser/:id" call'});
+		}
+	});
+}
