@@ -154,7 +154,7 @@ app.get('/getSingleFile', function (request, response, next){
                     });
                     responseData.on('error', function(err){
                         response.status(400);
-                        response.end(err);
+                        response.jsonp(err);
                     })
                 }
                 else{
