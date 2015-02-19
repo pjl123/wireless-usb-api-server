@@ -31,7 +31,20 @@ exports.createUser = function (userId, userObj, callback) {
 	exports.isAdmin(userId, function (result){
 		if(result){
 			console.log(userObj);
-			var user = new User(userObj);
+			var user = new User();
+			if(userObj.name !== undefined){
+				user.name = userObj.name;
+			}
+			if(userObj.isAdmin !== undefined){
+				user.isAdmin = userObj.isAdmin;
+			}
+			if(userObj.canUpload !== undefined){
+				user.canUpload = userObj.canUpload;
+			}
+			if(userObj.canDownload !== undefined){
+				user.canDownload = userObj.canDownload;
+			}
+
 			user.save(function (err, newUser){
 				if(err){
 					return callback({'err': err});
@@ -177,12 +190,12 @@ exports.getGroupsByUser = function (userId, targetId, callback){
 			});
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "POST /addManyGroupsToUser/:id" call'});
+			return callback({'err': 'Admin priviledges required for "GET /groupsByUser/:id" call'});
 		}
 	});
 }
 
-exports.addGroupsToUser = function (userId, targetId, groupIds, callback){
+exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
 			User.findOne({ '_id' : targetId }, function(err, user){
@@ -194,7 +207,17 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, callback){
 				}
 				else{
 					for (var i = 0; i < groupIds.length; i++) {
-						user.groups.addToSet(groupIds[i]);
+						if(flag == 1){
+							// TODO shouldn't be an error, but what if?
+							groups.addUsersToGroup(userId, groupIds[i], [targetId], 0, function(){});
+						}
+
+						try{
+							user.groups.addToSet(groupIds[i]);
+						}
+						catch(err){
+							return callback({'err':err});
+						}
 					}
 
 					user.save(function (err, updatedUser){
@@ -212,4 +235,9 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, callback){
 			return callback({'err': 'Admin priviledges required for "POST /addManyGroupsToUser/:id" call'});
 		}
 	});
+}
+
+// TODO implement
+exports.removeGroupFromUser = function (userId, targetId, groupIds, flag, callback){
+
 }

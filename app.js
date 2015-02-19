@@ -320,7 +320,7 @@ app.get('/groupsByUser/:id', function (request, response, next){
 app.post('/groupsToUser/:id', jsonParser, function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            users.addGroupsToUser(userId, request.params.id, request.body, function (responseData){
+            users.addGroupsToUser(userId, request.params.id, request.body, 1, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }
@@ -446,7 +446,48 @@ app.post('/groups/:id', jsonParser, function (request, response, next){
     });
 });
 
-// Add user to group
+// Get the users the given group contains
+app.get('/usersByGroup/:id', function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.getUsersByGroup(userId, request.params.id, function (responseData){
+                if(responseData.err){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                console.log(responseData);
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
+
+// Add array of user ids to the given group
+app.post('/usersToGroup/:id', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.addUsersToGroup(userId, request.params.id, request.body, 1, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(201);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
 
  /*
   * Network Module

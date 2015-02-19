@@ -15,7 +15,17 @@ var users = require('./user-handler.js');
 exports.createGroup = function (userId, groupObj, callback) {
 	users.isAdmin(userId, function (result){
 		if(result){
-			var group = new Group(groupObj);
+			var group = new Group();
+			if(groupObj.name !== undefined){
+				group.name = groupObj.name;
+			}
+			if(groupObj.canUpload !== undefined){
+				group.canUpload = groupObj.canUpload;
+			}
+			if(groupObj.canDownload !== undefined){
+				group.canDownload = groupObj.canDownload;
+			}
+
 			group.save(function (err, newGroup){
 				if(err){
 					return callback({'err': err});
@@ -124,27 +134,96 @@ exports.updateGroup = function (userId, groupId, groupObj, callback) {
 };
 
 exports.getUsersByGroup = function (userId, groupId, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			Group.findOne({ '_id' : groupId }, function(err, group){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(group === null){
+					return callback({'err':'User does not exist.'});
+				}
+				else{
+					var data = {'users':[]};
+					var numCalls = group.users.length;
+					for (var i = 0; i < group.users.length; i++) {
+						users.getUser(userId, group.users[i], function (err, user){
+							if(err === null){
+								data.users.push(user);
+							}
+							// TODO if there is an error what do I do?
 
+							numCalls = numCalls - 1;
+							if(numCalls <= 0){
+								return callback(data);
+							}
+						});
+					}
+					if(numCalls == 0){
+						return callback(data);
+					}
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "GET /usersByGroup/:id" call'});
+		}
+	});
 }
 
+// TODO implement
 exports.getFilesByGroup = function (userId, groupId, callback){
 
 }
 
-//TODO implement
-exports.addUserToGroup = function (userId, addUserId, groupId, callback) {
-	// body...
-};
+exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			Group.findOne({ '_id' : groupId }, function(err, group){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(group === null){
+					return callback({'err':'User does not exist.'});
+				}
+				else{
+					for (var i = 0; i < addUserIds.length; i++) {
+						if(flag == 1){
+							// TODO shouldn't be an error, but what if?
+							users.addGroupsToUser(userId, addUserIds[i], [groupId], 0, function(){});
+						}
+						// TODO check for error here
+						try{
+							group.users.addToSet(addUserIds[i]);
+						}
+						catch(err){
+							return callback({'err':err});
+						}
+					}
 
-exports.addManyUsersToGroup = function (userId, addUserIds, groupId, callback){
+					group.save(function (err, updatedGroup){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							return callback(updatedGroup);
+						}
+					});
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "POST /addUsersToGroup/:id" call'});
+		}
+	});
+}
+
+// TODO implement
+exports.addFilesToGroup = function (userId, addFileIds, groupId, callback){
 
 }
 
-//TODO implement
-exports.addFileToGroup = function (userId, addFileId, groupId, callback) {
-	// body...
-};
-
-exports.addManyFilesToGroup = function (userId, addFileIds, groupId, callback){
+// TODO implement
+exports.removeUsersFromGroup = function (userId, removeUserIds, groupId, flag, callback){
 
 }
