@@ -19,9 +19,11 @@ var port = 3000;
 // Custom Modules
 var auth = require('./modules/auth-handler');
 var fileDelivery = require('./modules/file-delivery');
-var users = require('./modules/user-handler');
-var groups = require('./modules/group-handler');
 var network = require('./modules/network-handler');
+
+// Routes
+var groupRoutes = require('./routes/group-routes');
+var userRoutes = require('./routes/user-routes');
 
 // Mongoose Schemas
 var User = require('./schemas/user-schema').User;
@@ -190,346 +192,56 @@ app.get('/setupWebStream', function (request, response, next){
  */
 
 // Create a new user
-app.post('/users', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.createUser(userId, request.body, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.post('/users', jsonParser, userRoutes.create);
 
 // Get single user by id
-app.get('/users/:id', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.getUser(userId, request.params.id, function (err, responseData){
-                if(err){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/users/:id', userRoutes.get);
 
 // Get all users
-app.get('/users', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.getAllUsers(userId, function (err, responseData){
-                if(err){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/users', userRoutes.getAll);
 
 // Delete user
-app.delete('/users/:id', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.deleteUser(userId, request.params.id, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.delete('/users/:id', userRoutes.delete);
 
 // Update user fields :id is the Mongo ObjectId
-app.post('/users/:id', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.updateUser(userId, request.params.id, request.body, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.post('/users/:id', jsonParser, userRoutes.update);
 
 // Get the groups the given user is part of
-app.get('/groupsByUser/:id', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.getGroupsByUser(userId, request.params.id, function (responseData){
-                if(responseData.err){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                console.log(responseData);
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/groupsByUser/:id', userRoutes.getGroupsByUser);
 
 // Add array of group ids to the given user
-app.post('/groupsToUser/:id', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.addGroupsToUser(userId, request.params.id, request.body, 1, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.post('/groupsToUser/:id', jsonParser, userRoutes.addGroupsToUser);
 
 // Remove array of group ids from the given user
-app.delete('/groupsFromUser/:id', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            users.removeGroupsFromUser(userId, request.params.id, request.body, 1, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.delete('/groupsFromUser/:id', jsonParser, userRoutes.removeGroupsFromUser);
 
 /*
  * Group Module
  */
 
 // Create group
-app.post('/groups', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.createGroup(userId, request.body, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.post('/groups', jsonParser, groupRoutes.create);
 
 // Get group
-app.get('/groups/:id', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.getGroup(userId, request.params.id, function (err, responseData){
-                if(err){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/groups/:id', groupRoutes.get);
 
 // Get all groups
-app.get('/groups', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.getAllGroups(userId, function (err, responseData){
-                if(err){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/groups', groupRoutes.getAll);
 
 // Delete group
-app.delete('/groups/:id', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.deleteGroup(userId, request.params.id, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.delete('/groups/:id', groupRoutes.delete);
 
 // Update group
-app.post('/groups/:id', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.updateGroup(userId, request.params.id, request.body, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.post('/groups/:id', jsonParser, groupRoutes.update);
 
 // Get the users the given group contains
-app.get('/usersByGroup/:id', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.getUsersByGroup(userId, request.params.id, function (responseData){
-                if(responseData.err){
-                    response.status(400);
-                }
-                else{
-                    response.status(200);
-                }
-                console.log(responseData);
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/usersByGroup/:id', groupRoutes.getUsersByGroup);
 
 // Add array of user ids to the given group
-app.post('/usersToGroup/:id', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.addUsersToGroup(userId, request.params.id, request.body, 1, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.post('/usersToGroup/:id', jsonParser, groupRoutes.addUsersToGroup);
 
 // Remove array of user ids from the given group
-app.delete('/usersFromGroup/:id', jsonParser, function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.removeUsersFromGroup(userId, request.params.id, request.body, 1, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.delete('/usersFromGroup/:id', jsonParser, groupRoutes.removeUsersFromGroup);
 
  /*
   * Network Module
