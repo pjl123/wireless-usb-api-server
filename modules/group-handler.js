@@ -141,7 +141,7 @@ exports.getUsersByGroup = function (userId, groupId, callback){
 					return callback({'err':err});
 				}
 				else if(group === null){
-					return callback({'err':'User does not exist.'});
+					return callback({'err':'Group does not exist.'});
 				}
 				else{
 					var data = {'users':[]};
@@ -184,7 +184,7 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 					return callback({'err':err});
 				}
 				else if(group === null){
-					return callback({'err':'User does not exist.'});
+					return callback({'err':'Group does not exist.'});
 				}
 				else{
 					for (var i = 0; i < addUserIds.length; i++) {
@@ -213,7 +213,7 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 			});
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "POST /addUsersToGroup/:id" call'});
+			return callback({'err': 'Admin priviledges required for "POST /usersToGroup/:id" call'});
 		}
 	});
 }
@@ -224,6 +224,44 @@ exports.addFilesToGroup = function (userId, addFileIds, groupId, callback){
 }
 
 // TODO implement
-exports.removeUsersFromGroup = function (userId, removeUserIds, groupId, flag, callback){
+exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			Group.findOne({ '_id' : groupId }, function(err, group){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(group === null){
+					return callback({'err':'Group does not exist.'});
+				}
+				else{
+					for (var i = 0; i < removeUserIds.length; i++) {
+						if(flag == 1){
+							// TODO shouldn't be an error, but what if?
+							users.removeGroupsFromUser(userId, removeUserIds[i], [groupId], 0, function(){});
+						}
+						// TODO check for error here
+						try{
+							group.users.remove(removeUserIds[i]);
+						}
+						catch(err){
+							return callback({'err':err});
+						}
+					}
 
+					group.save(function (err, updatedGroup){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							return callback(updatedGroup);
+						}
+					});
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "DELETE /usersFromGroup/:id" call'});
+		}
+	});
 }

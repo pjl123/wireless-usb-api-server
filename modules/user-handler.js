@@ -232,12 +232,50 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 			});
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "POST /addManyGroupsToUser/:id" call'});
+			return callback({'err': 'Admin priviledges required for "POST /groupsToUser/:id" call'});
 		}
 	});
 }
 
 // TODO implement
-exports.removeGroupFromUser = function (userId, targetId, groupIds, flag, callback){
+exports.removeGroupsFromUser = function (userId, targetId, groupIds, flag, callback){
+	exports.isAdmin(userId, function (result){
+		if(result){
+			User.findOne({ '_id' : targetId }, function(err, user){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(user === null){
+					return callback({'err':'User does not exist.'});
+				}
+				else{
+					for (var i = 0; i < groupIds.length; i++) {
+						if(flag == 1){
+							// TODO shouldn't be an error, but what if?
+							groups.removeUsersFromGroup(userId, groupIds[i], [targetId], 0, function(){});
+						}
 
+						try{
+							user.groups.remove(groupIds[i]);
+						}
+						catch(err){
+							return callback({'err':err});
+						}
+					}
+
+					user.save(function (err, updatedUser){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							return callback(updatedUser);
+						}
+					});
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "DELETE /groupsFromUser/:id" call'});
+		}
+	});
 }

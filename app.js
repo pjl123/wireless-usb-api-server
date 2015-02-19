@@ -337,6 +337,27 @@ app.post('/groupsToUser/:id', jsonParser, function (request, response, next){
     });
 });
 
+// Remove array of group ids from the given user
+app.delete('/groupsFromUser/:id', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            users.removeGroupsFromUser(userId, request.params.id, request.body, 1, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(201);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
+
 /*
  * Group Module
  */
@@ -473,6 +494,27 @@ app.post('/usersToGroup/:id', jsonParser, function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
             groups.addUsersToGroup(userId, request.params.id, request.body, 1, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(201);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+});
+
+// Remove array of user ids from the given group
+app.delete('/usersFromGroup/:id', jsonParser, function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.removeUsersFromGroup(userId, request.params.id, request.body, 1, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }
