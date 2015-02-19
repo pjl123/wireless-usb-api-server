@@ -1,6 +1,7 @@
 'use strict';
 
 var mongoose = require('mongoose');
+var File = require('./file-schema').File;
 
 var groupSchema = mongoose.Schema({
 	name: {
@@ -21,7 +22,7 @@ var groupSchema = mongoose.Schema({
 		type: [mongoose.Schema.Types.ObjectId]
 	},
 	files: {
-		type: [mongoose.Schema.Types.ObjectId]
+		type: [File]
 	}
 });
 

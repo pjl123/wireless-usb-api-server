@@ -145,19 +145,68 @@ exports.updateUser = function (userId, updateId, userObj, callback) {
 };
 
 exports.getGroupsByUser = function (userId, targetId, callback){
-
-}
-
-exports.addGroupToUser = function (userId, targetId, groupId, callback){
-
-}
-
-exports.addManyGroupsToUser = function (userId, targetId, groupIds, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
-			for (var i = 0; i < groupIds.length; i++) {
-				
-			};
+			User.findOne({ '_id' : targetId }, function(err, user){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(user === null){
+					return callback({'err':'User does not exist.'});
+				}
+				else{
+					var data = {'groups':[]};
+					var numCalls = user.groups.length;
+					for (var i = 0; i < user.groups.length; i++) {
+						groups.getGroup(userId, user.groups[i], function (err, group){
+							if(err === null){
+								data.groups.push(group);
+							}
+							// TODO if there is an error what do I do?
+
+							numCalls = numCalls - 1;
+							if(numCalls <= 0){
+								return callback(data);
+							}
+						});
+					}
+					if(numCalls == 0){
+						return callback(data);
+					}
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "POST /addManyGroupsToUser/:id" call'});
+		}
+	});
+}
+
+exports.addGroupsToUser = function (userId, targetId, groupIds, callback){
+	exports.isAdmin(userId, function (result){
+		if(result){
+			User.findOne({ '_id' : targetId }, function(err, user){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(user === null){
+					return callback({'err':'User does not exist.'});
+				}
+				else{
+					for (var i = 0; i < groupIds.length; i++) {
+						user.groups.addToSet(groupIds[i]);
+					}
+
+					user.save(function (err, updatedUser){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							return callback(updatedUser);
+						}
+					});
+				}
+			});
 		}
 		else{
 			return callback({'err': 'Admin priviledges required for "POST /addManyGroupsToUser/:id" call'});

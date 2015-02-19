@@ -5,8 +5,11 @@
  * that user has access to.
  */
 
+var File = require('../schemas/file-schema').File;
+
 var usb = require('./usb-handler');
 var users = require('./user-handler');
+var groups = require('./group-handler');
 
 exports.getFileListing = function(relPath, userId, callback){
 	users.isAdmin(userId, function(result){
@@ -21,8 +24,8 @@ exports.getFileListing = function(relPath, userId, callback){
 	});
 };
 
-exports.getFileListingByGroup = function(relPath, accessToken, callback){
-
+exports.getFileListingByGroup = function(userId, callback){
+	// TODO get files from group whose relPath is containingDirectory
 }
 
 exports.getSingleFile = function (relPath, callback){

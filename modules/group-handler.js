@@ -35,15 +35,15 @@ exports.createGroup = function (userId, groupObj, callback) {
 exports.getGroup = function (userId, groupId, callback) {
 	users.isAdmin(userId, function (result){
 		if(result){
-			Group.findOne({ '_id': groupId }, function (err, user){
+			Group.findOne({ '_id': groupId }, function (err, group){
 				if(err){
 					return callback(true, {'err': err});
 				}
-				else if(user === null){
+				else if(group === null){
 					return callback(true, {'err': 'No group with given id: ' + groupId});
 				}
 				else{
-					return callback(err, user);
+					return callback(err, group);
 				}
 			});
 		}
