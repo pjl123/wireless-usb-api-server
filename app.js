@@ -18,12 +18,11 @@ var port = 3000;
 
 // Custom Modules
 var auth = require('./modules/auth-handler');
-var fileDelivery = require('./modules/file-delivery');
-var network = require('./modules/network-handler');
 
 // Routes
 var groupRoutes = require('./routes/group-routes');
 var userRoutes = require('./routes/user-routes');
+var fileRoutes = require('./routes/file-routes');
 
 // Mongoose Schemas
 var User = require('./schemas/user-schema').User;
@@ -126,66 +125,14 @@ app.get('/requestAccessToken', function (request, response, next){
  */
 
 // Relative file path included in request query
-app.get('/fileListing', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            fileDelivery.getFileListing(request.query.path, userId, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/fileListing', fileRoutes.getFileListing);
+
+app.post('/addFilesToGroup', jsonParser, fileRoutes.addFilesToGroup);
 
 // Relative file path included in request query
-app.get('/getSingleFile', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            fileDelivery.getSingleFile(request.query.path, function (responseData){
-                if(responseData.err === undefined){
-                    responseData.on('open', function () {
-                        responseData.pipe(response);
-                    });
-                    responseData.on('error', function(err){
-                        response.status(400);
-                        response.jsonp(err);
-                    })
-                }
-                else{
-                    response.status(400);
-                    response.jsonp(responseData);
-                }
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/getSingleFile', fileRoutes.getSingleFile);
 
-app.get('/setupWebStream', function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            fileDelivery.setupWebStream(request.query.path, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-});
+app.get('/setupWebStream', fileRoutes.setupWebStream);
 
 /*
  * User Module
@@ -210,10 +157,10 @@ app.post('/users/:id', jsonParser, userRoutes.update);
 app.get('/groupsByUser/:id', userRoutes.getGroupsByUser);
 
 // Add array of group ids to the given user
-app.post('/groupsToUser/:id', jsonParser, userRoutes.addGroupsToUser);
+// app.post('/groupsToUser/:id', jsonParser, userRoutes.addGroupsToUser);  // MOVED TO UPDATE CALL
 
 // Remove array of group ids from the given user
-app.delete('/groupsFromUser/:id', jsonParser, userRoutes.removeGroupsFromUser);
+// app.delete('/groupsFromUser/:id', jsonParser, userRoutes.removeGroupsFromUser);  // MOVED TO UPDATE CALL
 
 /*
  * Group Module
@@ -238,10 +185,16 @@ app.post('/groups/:id', jsonParser, groupRoutes.update);
 app.get('/usersByGroup/:id', groupRoutes.getUsersByGroup);
 
 // Add array of user ids to the given group
-app.post('/usersToGroup/:id', jsonParser, groupRoutes.addUsersToGroup);
+// app.post('/usersToGroup/:id', jsonParser, groupRoutes.addUsersToGroup);  // MOVED TO UPDATE CALL
 
 // Remove array of user ids from the given group
-app.delete('/usersFromGroup/:id', jsonParser, groupRoutes.removeUsersFromGroup);
+// app.delete('/usersFromGroup/:id', jsonParser, groupRoutes.removeUsersFromGroup);  // MOVED TO UPDATE CALL
+
+app.get('/filesByGroup/:id', groupRoutes.getFilesByGroup);
+
+// app.post('/filesToGroup/:id', jsonParser, groupRoutes.addFilesToGroup);  // MOVED TO UPDATE CALL
+
+// app.delete('/filesFromGroup/:id', jsonParser, groupRoutes.removeFilesFromGroup);  // MOVED TO UPDATE CALL
 
  /*
   * Network Module

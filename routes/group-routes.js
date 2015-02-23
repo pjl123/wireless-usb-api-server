@@ -173,3 +173,25 @@ exports.removeUsersFromGroup = function (request, response, next){
         }
     });
 }
+
+// Get the users the given group contains
+exports.getFilesByGroup = function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            groups.getFilesByGroup(userId, request.params.id, function (responseData){
+                if(responseData.err){
+                    response.status(400);
+                }
+                else{
+                    response.status(200);
+                }
+                console.log(responseData);
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+}

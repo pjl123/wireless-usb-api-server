@@ -11,10 +11,10 @@ var usb = require('./usb-handler');
 var users = require('./user-handler');
 var groups = require('./group-handler');
 
-exports.getFileListing = function(relPath, userId, callback){
-	users.isAdmin(userId, function(result){
+exports.getFileListing = function (relPath, userId, callback){
+	users.isAdmin(userId, function (result){
 		if(result){
-			usb.getFileListing(relPath, function(data){
+			usb.getFileListing(relPath, function (data){
 				return callback(data);
 			});
 		}
@@ -24,14 +24,46 @@ exports.getFileListing = function(relPath, userId, callback){
 	});
 };
 
-exports.getFileListingByGroup = function(userId, callback){
-	// TODO get files from group whose relPath is containingDirectory
+exports.addFilesToGroup = function (relPaths, userId, groupId, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			var files = [];
+			var numPaths = relPaths.length;
+
+			for (var i = 0; i < relPaths.length; i++) {
+				var file = {};
+				file.filepath = relPaths[i];
+
+				usb.getFileStats(relPaths[i], function (stats){
+					if(stats.err === undefined){
+						file.isDirectory = stats.isDirectory();
+						file.size = stats.size;
+						file.lastUpdated = Date.now();
+						files.push(file);
+					}
+
+					numPaths = numPaths - 1;
+					if(numPaths <= 0){
+						groups.addFilesToGroup(userId, groupId, files, function (result){
+							return callback(result);
+						});
+					}
+				});
+			};
+			if(numPaths <= 0){
+				return callback({'err':'No paths given to add to the group'});
+			}
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "POST /filesToGroup" call'});
+		}
+	});
 }
 
 exports.getSingleFile = function (relPath, callback){
 	// TODO verify this user has access to file
 
-	usb.getSingleFile(relPath, function(data){
+	usb.getSingleFile(relPath, function (data){
 		return callback(data);
 	});
 };
@@ -44,7 +76,7 @@ exports.getManyFiles = function (argument) {
 exports.setupWebStream = function (relPath, callback){
 	// TODO verify user has access to the file
 
-	usb.setupWebStream(relPath, function(data){
+	usb.setupWebStream(relPath, function (data){
 		return callback(data);
 	});
 };

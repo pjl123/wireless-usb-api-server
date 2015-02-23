@@ -5,12 +5,12 @@
 */
 
 // TODO update to the actual path on the Raspberry Pi
-var usbPath = 'C:/Users/Patrick.pat-PC/Documents/School/Fall 2013/Embedded Systems';
+var usbPath = 'C:/Windows/Media';
 // TODO set path of Raspberry Pi for serving files
 var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-file-server/temp_files';
 var fs = require('fs');
 
-exports.getFileListing = function(relPath, callback) {
+exports.getFileListing = function (relPath, callback) {
 	var filepath;
 	if((relPath.trim()).length === 0){
 		filepath = usbPath;
@@ -19,7 +19,7 @@ exports.getFileListing = function(relPath, callback) {
 		var filepath = usbPath + '/' + relPath;
 	}
 
-	fs.readdir(filepath,function(err,list){
+	fs.readdir(filepath,function (err,list){
     if(!err){
       var files = [];
       for (var i = 0; i < list.length; i++) {
@@ -43,6 +43,16 @@ exports.getFileListing = function(relPath, callback) {
   });
 };
 
+exports.getFileStats = function (relPath, callback){
+  fs.stat(usbPath + '/' + relPath, function (err, stats){
+    if(err !== undefined){
+      return callback(stats);
+    }
+    else{
+      return callback({'err':err});
+    }
+  });
+}
 
 exports.getSingleFile = function (relPath, callback){
   if((relPath.trim()).length === 0){

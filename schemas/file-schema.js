@@ -20,14 +20,7 @@ var fileSchema = mongoose.Schema({
 	lastUpdated: {
 		type: Date,
 		required: true
-	},
-	containingDirectory: {
-		type: mongoose.Schema.Types.ObjectId,
-		required: true
-	},
-	groups: {
-		type: [mongoose.Schema.Types.ObjectId]
-	},
+	}
 });
 
 exports.File = fileSchema;

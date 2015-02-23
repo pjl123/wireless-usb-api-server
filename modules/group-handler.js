@@ -126,7 +126,25 @@ exports.updateGroup = function (userId, groupId, groupObj, callback) {
 					return callback({'err': err});
 				}
 				else{
-					return callback(updatedUser);
+					try{
+						// Add or remove users
+						if(groupObj.addUserIds !== undefined){
+							exports.addUsersToGroup(userId, groupId, groupObj.addUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+						}
+
+						if(groupObj.removeUserIds !== undefined){
+							exports.removeUsersFromGroup(userId, groupId, groupObj.removeUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+						}
+
+						// Remove files
+						if(groupObj.removeFileIds !== undefined){
+							exports.removeFilesFromGroup(userId, groupId, groupObj.removeFileIds, function (data) {if(data.err !== undefined) throw data.err;});
+						}
+					}
+					catch(err){
+						return callback(err);
+					}
+					return callback({'success':'Update was successful.'});
 				}
 			});
 		}
@@ -171,11 +189,6 @@ exports.getUsersByGroup = function (userId, groupId, callback){
 	});
 }
 
-// TODO implement
-exports.getFilesByGroup = function (userId, groupId, callback){
-
-}
-
 exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
@@ -192,8 +205,8 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 							// TODO shouldn't be an error, but what if?
 							users.addGroupsToUser(userId, addUserIds[i], [groupId], 0, function(){});
 						}
-						// TODO check for error here
 						try{
+							// TODO check if users exist first
 							group.users.addToSet(addUserIds[i]);
 						}
 						catch(err){
@@ -219,11 +232,6 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 }
 
 // TODO implement
-exports.addFilesToGroup = function (userId, addFileIds, groupId, callback){
-
-}
-
-// TODO implement
 exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
@@ -240,7 +248,6 @@ exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, c
 							// TODO shouldn't be an error, but what if?
 							users.removeGroupsFromUser(userId, removeUserIds[i], [groupId], 0, function(){});
 						}
-						// TODO check for error here
 						try{
 							group.users.remove(removeUserIds[i]);
 						}
@@ -262,6 +269,104 @@ exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, c
 		}
 		else{
 			return callback({'err': 'Admin priviledges required for "DELETE /usersFromGroup/:id" call'});
+		}
+	});
+}
+
+// TODO also return files if userId is in the group
+exports.getFilesByGroup = function (userId, groupId, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			Group.findOne({ '_id' : groupId }, 'files', function(err, group){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(group === null){
+					return callback({'err':'Group does not exist.'});
+				}
+				else{
+					// TODO run stats on files if they were updated too long ago
+					return callback(group);
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "GET /filesByGroup/:id" call'});
+		}
+	});
+}
+
+exports.addFilesToGroup = function (userId, groupId, addFiles, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			Group.findOne({ '_id' : groupId }, function (err, group){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(group === null){
+					return callback({'err':'Group does not exist.'});
+				}
+				else{
+					for (var i = 0; i < addFiles.length; i++) {
+						try{
+							// TODO not being validated for duplicate file paths
+							group.files.push(addFiles[i]);
+						}
+						catch(err){
+							return callback({'err':err});
+						}
+					}
+
+					group.save(function (err, updatedGroup){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							return callback(updatedGroup);
+						}
+					});
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "POST /filesToGroup/:id" call'});
+		}
+	});
+}
+
+exports.removeFilesFromGroup = function (userId, groupId, removeFileIds, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			Group.findOne({ '_id' : groupId }, function (err, group){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(group === null){
+					return callback({'err':'Group does not exist.'});
+				}
+				else{
+					for (var i = 0; i < removeFileIds.length; i++) {
+						try{
+							group.files.id(removeFileIds[i]).remove();
+						}
+						catch(err){
+							return callback({'err':err});
+						}
+					}
+
+					group.save(function (err, updatedGroup){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							return callback(updatedGroup);
+						}
+					});
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "DELETE /filesFromGroup/:id" call'});
 		}
 	});
 }
