@@ -129,7 +129,7 @@ exports.updateUser = function (userId, updateId, userObj, callback) {
 				user.name = userObj.name;
 			}
 
-			// Only fields and admin can change
+			// Only fields an admin can change
 			if(user.isAdmin || userId !== updateId){
 				if(userObj.isAdmin !== undefined){
 					user.isAdmin = userObj.isAdmin;
@@ -140,9 +140,6 @@ exports.updateUser = function (userId, updateId, userObj, callback) {
 				if(userObj.canDownload !== undefined){
 					user.canDownload = userObj.canDownload;
 				}
-				if(userObj.groups !== undefined){
-					user.groups = userObj.groups;
-				}
 			}
 
 			user.save(function (err, updatedUser){
@@ -150,7 +147,22 @@ exports.updateUser = function (userId, updateId, userObj, callback) {
 					return callback({'err': err});
 				}
 				else{
-					return callback(updatedUser);
+					if(user.isAdmin || userId !== updateId){
+						try{
+							// Add or remove groups
+							if(userObj.addGroupIds !== undefined){
+								exports.addGroupsToUser(userId, updateId, userObj.addGroupIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+							}
+
+							if(userObj.removeGroupIds !== undefined){
+								exports.removeGroupsFromUser(userId, updateId, userObj.removeGroupIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+							}
+						}
+						catch(err){
+							return callback(err);
+						}
+					}
+					return callback({'success':'Update was successful.'});
 				}
 			});
 		}
