@@ -7,7 +7,7 @@
 // TODO update to the actual path on the Raspberry Pi
 var usbPath = 'C:/Windows/Media';
 // TODO set path of Raspberry Pi for serving files
-var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-file-server/temp_files';
+var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-web-server/app/audio';
 var fs = require('fs');
 
 exports.getFileListing = function (relPath, callback) {

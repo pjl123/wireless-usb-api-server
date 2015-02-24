@@ -206,9 +206,9 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 							users.addGroupsToUser(userId, addUserIds[i], [groupId], 0, function(){});
 						}
 						try{
-							users.getUser(userId, addUserIds[i], function (result){
+							users.getUser(userId, addUserIds[i], function (err,result){
 								// Add user if record exists alread.
-								if(result.err === undefined)
+								if(!err)
 									group.users.addToSet(addUserIds[i]);
 							});
 						}
