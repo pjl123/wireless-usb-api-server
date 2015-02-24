@@ -219,31 +219,39 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 				}
 				else{
 					for (var i = 0; i < groupIds.length; i++) {
+						var currGroup = groupIds[i];
+						var numGroups = groupIds.length;
 						if(flag == 1){
 							// TODO shouldn't be an error, but what if?
-							groups.addUsersToGroup(userId, groupIds[i], [targetId], 0, function(){});
+							groups.addUsersToGroup(userId, currGroup, [targetId], 0, function(){});
 						}
 
 						try{
-							groups.getGroup(userId, groupIds[i], function (err,result){
+							groups.getGroup(userId, currGroup, function (err,result){
 								// Add group if the record already exists
-								if(!err)
-									user.groups.addToSet(groupIds[i]);
+								if(!err){
+									user.groups.addToSet(currGroup);
+									numGroups = numGroups - 1;
+									if(numGroups <= 0){
+										user.save(function (err, updatedUser){
+											if(err){
+												return callback({'err':err});
+											}
+											else{
+												return callback(updatedUser);
+											}
+										});
+									}
+								}
+								else{
+									return callback(result);
+								}
 							});
 						}
 						catch(err){
 							return callback({'err':err});
 						}
 					}
-
-					user.save(function (err, updatedUser){
-						if(err){
-							return callback({'err':err});
-						}
-						else{
-							return callback(updatedUser);
-						}
-					});
 				}
 			});
 		}
