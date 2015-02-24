@@ -6,7 +6,6 @@ var fileSchema = mongoose.Schema({
 	filepath: {
 		type: String,
 		required: true,
-		unique: true,
 		index: true
 	},
 	isDirectory: {
