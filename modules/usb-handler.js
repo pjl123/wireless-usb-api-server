@@ -45,7 +45,10 @@ exports.getFileListing = function (relPath, callback) {
 
 exports.getFileStats = function (relPath, callback){
   fs.stat(usbPath + '/' + relPath, function (err, stats){
-    if(err !== undefined){
+    if(stats === undefined){
+      return callback({'err':'File does not exist'});
+    }
+    else if(err !== undefined){
       return callback(stats);
     }
     else{

@@ -225,7 +225,11 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 						}
 
 						try{
-							user.groups.addToSet(groupIds[i]);
+							groups.getGroup(userId, groupIds[i], function (result){
+								// Add group if the record already exists
+								if(result.err === undefined)
+									user.groups.addToSet(groupIds[i]);
+							});
 						}
 						catch(err){
 							return callback({'err':err});

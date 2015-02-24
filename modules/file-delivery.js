@@ -34,7 +34,7 @@ exports.addFilesToGroup = function (relPaths, userId, groupId, callback){
 				var file = {};
 				file.filepath = relPaths[i];
 
-				usb.getFileStats(relPaths[i], function (stats){
+				exports.getFileStats(relPaths[i], function (stats){
 					if(stats.err === undefined){
 						file.isDirectory = stats.isDirectory();
 						file.size = stats.size;
@@ -59,6 +59,12 @@ exports.addFilesToGroup = function (relPaths, userId, groupId, callback){
 		}
 	});
 }
+
+exports.getFileStats = function (relPath, callback){
+	usb.getFileStats(relPath, function (stats){
+		return callback(stats);
+	});
+};
 
 exports.getSingleFile = function (relPath, callback){
 	// TODO verify this user has access to file

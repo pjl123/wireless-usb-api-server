@@ -10,6 +10,7 @@ var User = userSchema.User;
 var Group = groupSchema.Group;
 
 var users = require('./user-handler.js');
+var fileDelivery = require('./file-delivery.js');
 
 // Create group
 exports.createGroup = function (userId, groupObj, callback) {
@@ -96,7 +97,6 @@ exports.deleteGroup = function (userId, groupId, callback) {
 	});
 };
 
-//TODO implement
 exports.updateGroup = function (userId, groupId, groupObj, callback) {
 	exports.getGroup(userId, groupId, function (err, group){
 		if(err){
@@ -206,8 +206,11 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 							users.addGroupsToUser(userId, addUserIds[i], [groupId], 0, function(){});
 						}
 						try{
-							// TODO check if users exist first
-							group.users.addToSet(addUserIds[i]);
+							users.getUser(userId, addUserIds[i], function (result){
+								// Add user if record exists alread.
+								if(result.err === undefined)
+									group.users.addToSet(addUserIds[i]);
+							});
 						}
 						catch(err){
 							return callback({'err':err});
@@ -231,7 +234,6 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 	});
 }
 
-// TODO implement
 exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
@@ -285,7 +287,21 @@ exports.getFilesByGroup = function (userId, groupId, callback){
 					return callback({'err':'Group does not exist.'});
 				}
 				else{
-					// TODO run stats on files if they were updated too long ago
+					// run stats on files if they were updated too long ago
+					var sevenDays = 604800000; // 7 days in milliseconds
+					for (var i = 0; i < group.files.length; i++) {
+						if(group.files[i].lastUpdated.getTime() + sevenDays > Date.now()){
+							fileDelivery.getFileStats(group.files[i].filepath, function (stats){
+								if(stats.err === undefined){
+									group.files[i].size = stats.size;
+									group.files[i].lastUpdated = Date.now();
+								}
+								else{
+									// TODO remove file from group if there's an error?
+								}
+							});
+						}
+					};
 					return callback(group);
 				}
 			});
@@ -309,8 +325,14 @@ exports.addFilesToGroup = function (userId, groupId, addFiles, callback){
 				else{
 					for (var i = 0; i < addFiles.length; i++) {
 						try{
-							// TODO not being validated for duplicate file paths
-							group.files.push(addFiles[i]);
+							var exists = false;
+							for (var i = 0; i < group.files.length; i++) {
+								if(group.files[i].filepath === addFiles[i].filepath)
+									exists = true;
+							};
+							// Add file if it doesn't already exist in the record
+							if(!exists)
+								group.files.push(addFiles[i]);
 						}
 						catch(err){
 							return callback({'err':err});
