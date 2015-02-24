@@ -39,6 +39,23 @@ exports.addFilesToGroup = function (request, response, next){
     });
 }
 
+exports.addGroupsToFile = function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            fileDelivery.addGroupsToFile(request.body.path, userId, request.body.groupIds, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+}
+
 // Relative file path included in request query
 exports.getSingleFile = function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){

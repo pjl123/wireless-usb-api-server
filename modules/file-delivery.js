@@ -60,6 +60,47 @@ exports.addFilesToGroup = function (relPaths, userId, groupId, callback){
 	});
 }
 
+exports.addGroupsToFile = function (relPath, userId, groupIds, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			var numGroups = groupIds.length;
+			var groupsAdded = [];
+
+			for (var i = 0; i < groupIds.length; i++) {
+				var file = {};
+				file.filepath = relPath;
+
+				exports.getFileStats(relPath, function (stats){
+					if(stats.err === undefined){
+						file.isDirectory = stats.isDirectory();
+						file.size = stats.size;
+						file.lastUpdated = Date.now();
+
+						groups.addFilesToGroup(userId, groupIds[i], [file], function (result){
+							numGroups = numGroups - 1;
+								if(result.err === undefined){
+									groupsAdded.push(result.id);
+								}
+								if(numGroups <= 0){
+									return callback({'success':'Added file to groups: ' + groupsAdded});
+								}
+						});
+					}
+					else{
+						return callback(stats);
+					}
+				});
+			};
+			if(numGroups <= 0){
+				return callback({'err':'No groups given to add to the file'});
+			}
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "POST /groupsToFile" call'});
+		}
+	});
+}
+
 exports.getFileStats = function (relPath, callback){
 	usb.getFileStats(relPath, function (stats){
 		return callback(stats);

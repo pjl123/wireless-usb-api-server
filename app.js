@@ -129,6 +129,8 @@ app.get('/fileListing', fileRoutes.getFileListing);
 
 app.post('/addFilesToGroup', jsonParser, fileRoutes.addFilesToGroup);
 
+app.post('/addGroupsToFile', jsonParser, fileRoutes.addGroupsToFile);
+
 // Relative file path included in request query
 app.get('/getSingleFile', fileRoutes.getSingleFile);
 
