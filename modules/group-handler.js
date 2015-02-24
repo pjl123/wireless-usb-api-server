@@ -200,9 +200,9 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 					return callback({'err':'Group does not exist.'});
 				}
 				else{
+					var numUsers = addUserIds.length;
 					for (var i = 0; i < addUserIds.length; i++) {
 						var currUser = addUserIds[i];
-						var numUsers = addUserIds.length;
 						if(flag == 1){
 							// TODO shouldn't be an error, but what if?
 							users.addGroupsToUser(userId, currUser, [groupId], 0, function(){});
