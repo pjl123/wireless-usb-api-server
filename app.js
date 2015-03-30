@@ -1,6 +1,13 @@
 'use strict';
 
 /*
+ * App Settings
+ */
+var port = 3000;
+var mongoServer = 'mongodb://192.168.1.250/wireless-usb';
+//var mongoServer = 'mongodb://192.168.42.1/wireless-usb';
+
+/*
  * Express Dependencies
  */
 var express = require('express');
@@ -10,7 +17,6 @@ var app = express();
 var jsonParser = bodyParser.json();
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 var mongoose = require('mongoose');
-var port = 3000;
 
 /*
  * Custom API Dependencies
@@ -75,7 +81,7 @@ app.set('view engine', 'handlebars');
  * Connect to the mongo database
  */
 
-mongoose.connect('mongodb://localhost/wireless-usb');
+mongoose.connect(mongoServer);
 var conn = mongoose.connection;
 conn.on('error', function (callback){
     console.error('Could not connect to Mongo! Contact your admin to start it.\nExiting now!');
