@@ -218,40 +218,40 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 					return callback({'err':'User does not exist.'});
 				}
 				else{
-					var numGroups = groupIds.length;
+					// Add all groups and remove bad ids after save
 					for (var i = 0; i < groupIds.length; i++) {
-						var currGroup = groupIds[i];
-						if(flag == 1){
-							// TODO shouldn't be an error, but what if?
-							groups.addUsersToGroup(userId, currGroup, [targetId], 0, function(){});
-						}
-
 						try{
-							groups.getGroup(userId, currGroup, function (err,result){
-								// Add group if the record already exists
-								if(!err){
-									user.groups.addToSet(currGroup);
-									numGroups = numGroups - 1;
-									if(numGroups <= 0){
-										user.save(function (err, updatedUser){
-											if(err){
-												return callback({'err':err});
-											}
-											else{
-												return callback(updatedUser);
-											}
-										});
-									}
-								}
-								else{
-									return callback(result);
-								}
-							});
+							user.groups.addToSet(groupIds[i]);
 						}
 						catch(err){
+							// Should only catch ids being added that are not the right Mongo format
+							console.log("Error adding id: " + groupIds[i]);
+							groupIds.splice(i,1);
+						}
+					};
+					user.save(function (err, updatedUser){
+						if(err){
 							return callback({'err':err});
 						}
-					}
+						else{
+							for (var i = 0; i < groupIds.length; i++) {
+								var currGroup = groupIds[i]
+								groups.getGroup(userId, groupIds[i], function (err,group){
+									if(!err){
+										if(flag == 1){
+											// TODO shouldn't be an error, but what if?
+											groups.addUsersToGroup(userId, group.id, [targetId], 0, function(){});
+										}
+									}
+									else{
+										// Remove user if it doesn't exist
+										exports.removeUsersFromGroup(userId, targetId, [currGroup], 0, function(){});
+									}
+								});
+							}
+							return callback(updatedUser);
+						}
+					});
 				}
 			});
 		}

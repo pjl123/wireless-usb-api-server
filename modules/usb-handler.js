@@ -82,7 +82,12 @@ exports.setupWebStream = function (relPath, callback){
 
   // TODO check file size before sending to make sure it's not too large.
   // Also make sure the file does not already exist there.
-  fs.createReadStream(filepath).pipe(fs.createWriteStream(serverPath + '/' + filename));
+  try{
+    fs.createReadStream(filepath).pipe(fs.createWriteStream(serverPath + '/' + filename));
+  }
+  catch (err){
+    console.log(err);
+  }
   return callback({'filename':filename});
 };
 

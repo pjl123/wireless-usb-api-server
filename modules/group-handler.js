@@ -200,40 +200,40 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 					return callback({'err':'Group does not exist.'});
 				}
 				else{
-					var numUsers = addUserIds.length;
+					// Add all users and remove bad ids after save
 					for (var i = 0; i < addUserIds.length; i++) {
-						var currUser = addUserIds[i];
-						if(flag == 1){
-							// TODO shouldn't be an error, but what if?
-							users.addGroupsToUser(userId, currUser, [groupId], 0, function(){});
-						}
 						try{
-							users.getUser(userId, currUser, function (err,result){
-								// Add user if record exists alread.
-								if(!err){
-									group.users.addToSet(currUser);
-
-									numUsers = numUsers - 1;
-									if(numUsers <= 0){
-										group.save(function (err, updatedGroup){
-											if(err){
-												return callback({'err':err});
-											}
-											else{
-												return callback(updatedGroup);
-											}
-										});
-									}
-								}
-								else{
-									return callback(result);
-								}
-							});
+							group.users.addToSet(addUserIds[i]);
 						}
 						catch(err){
+							// Should only catch ids being added that are not the right Mongo format
+							console.log("Error adding id: " + addUserIds[i]);
+							addUserIds.splice(i,1);
+						}
+					};
+					group.save(function (err, updatedGroup){
+						if(err){
 							return callback({'err':err});
 						}
-					}
+						else{
+							for (var i = 0; i < addUserIds.length; i++) {
+								var currUser = addUserIds[i]
+								users.getUser(userId, addUserIds[i], function (err,user){
+									if(!err){
+										if(flag == 1){
+											// TODO shouldn't be an error, but what if?
+											users.addGroupsToUser(userId, user.id, [groupId], 0, function(){});
+										}
+									}
+									else{
+										// Remove user if it doesn't exist
+										exports.removeUsersFromGroup(userId, groupId, [currUser], 0, function(){});
+									}
+								});
+							}
+							return callback(updatedGroup);
+						}
+					});
 				}
 			});
 		}
