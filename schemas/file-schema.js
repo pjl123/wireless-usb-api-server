@@ -25,6 +25,9 @@ var fileSchema = mongoose.Schema({
 		type: Date,
 		required: true
 	},
+	parentDirectory: {
+		type: mongoose.Schema.Types.ObjectId // Maybe make this required and have it point to the group id if it's top level file
+	},
 	groups: {
 		type: [mongoose.Schema.Types.ObjectId]
 	}

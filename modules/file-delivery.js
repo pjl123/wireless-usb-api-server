@@ -18,16 +18,20 @@ exports.getFileListing = function (fileId, userId, callback){
 			getFile({'_id' : fileId}, function (err, file){
 				// If file does not exist, do the listing for the base directory
 				var relPath;
+				var parentDirectory;
 				if(!err){
 					relPath = file.filepath;
+					parentDirectory = file.id;
 				}
 				else{
 					relPath = '';
+					parentDirectory = null;
 				}
 				usb.getFileListing(relPath, function (fileData){
 					var filesToReturn = { 'files':[] };
 					var numFiles = fileData.files.length;
 					for (var i = 0; i < fileData.files.length; i++) {
+						fileData.files[i].parentDirectory = parentDirectory;
 						createFile(fileData.files[i], function (newFile, filepath){
 							// Return file if it was newly created
 							if(newFile !== null){
@@ -182,9 +186,10 @@ var createFile = function (file, callback){
 	newFile.isDirectory = file.isDirectory;
 	newFile.size = file.size;
 	newFile.lastUpdated = Date.now();
+	newFile.parentDirectory = file.parentDirectory;
 	newFile.save(function(err, createdFile){
 		if(err){
-			console.log(err);
+			//console.log(err);
 			return callback(null, file.filepath);
 		}
 		else{
