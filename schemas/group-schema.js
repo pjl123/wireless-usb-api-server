@@ -22,7 +22,7 @@ var groupSchema = mongoose.Schema({
 		type: [mongoose.Schema.Types.ObjectId]
 	},
 	files: {
-		type: [File]
+		type: [mongoose.Schema.Types.ObjectId]
 	}
 });
 

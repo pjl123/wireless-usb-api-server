@@ -5,17 +5,53 @@
  * that user has access to.
  */
 
-var File = require('../schemas/file-schema').File;
+var fileSchema = require('../schemas/file-schema');
+var File = fileSchema.File;
 
 var usb = require('./usb-handler');
 var users = require('./user-handler');
 var groups = require('./group-handler');
 
-exports.getFileListing = function (relPath, userId, callback){
+exports.getFileListing = function (fileId, userId, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			usb.getFileListing(relPath, function (data){
-				return callback(data);
+			getFile({'_id' : fileId}, function (err, file){
+				// If file does not exist, do the listing for the base directory
+				var relPath;
+				if(!err){
+					relPath = file.filepath;
+				}
+				else{
+					relPath = '';
+				}
+				usb.getFileListing(relPath, function (fileData){
+					var filesToReturn = { 'files':[] };
+					var numFiles = fileData.files.length;
+					for (var i = 0; i < fileData.files.length; i++) {
+						createFile(fileData.files[i], function (newFile, filepath){
+							// Return file if it was newly created
+							if(newFile !== null){
+								filesToReturn.files.push(newFile);
+								numFiles --;
+								if(numFiles <= 0){
+									return callback(filesToReturn);
+								}
+							}
+							// Retrieve the file from the database since it already exists
+							else{
+								getFile({ 'filepath' : filepath }, function (err, file){
+									if(!err){
+										filesToReturn.files.push(file);
+										numFiles --;
+									}
+									if(numFiles <= 0){
+										return callback(filesToReturn);
+									}
+								});
+							}
+						});
+					}
+				});
 			});
 		}
 		else{
@@ -49,7 +85,7 @@ exports.addFilesToGroup = function (relPaths, userId, groupId, callback){
 						});
 					}
 				});
-			};
+			}
 			if(numPaths <= 0){
 				return callback({'err':'No paths given to add to the group'});
 			}
@@ -137,3 +173,28 @@ exports.createFileStream = function (argument) {
 exports.uploadFile = function (argument) {
 	// body...
 };
+
+var createFile = function (file, callback){
+	var newFile = new File();
+	// TODO implement creating/storing/reading usb identifiers
+	newFile.usbId = "test";
+	newFile.filepath = file.filepath;
+	newFile.isDirectory = file.isDirectory;
+	newFile.size = file.size;
+	newFile.lastUpdated = Date.now();
+	newFile.save(function(err, createdFile){
+		if(err){
+			console.log(err);
+			return callback(null, file.filepath);
+		}
+		else{
+			return callback(createdFile);
+		}
+	});
+}
+
+var getFile = function (query, callback){
+	File.findOne(query, function (err, file){
+		return callback(err, file);
+	});
+}

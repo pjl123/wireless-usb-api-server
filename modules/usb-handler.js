@@ -11,34 +11,34 @@ var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireles
 var fs = require('fs');
 
 exports.getFileListing = function (relPath, callback) {
-	var filepath;
+	var fullpath;
 	if((relPath.trim()).length === 0){
-		filepath = usbPath;
+		fullpath = usbPath;
 	}
 	else{
-		var filepath = usbPath + '/' + relPath;
+		var fullpath = usbPath + '/' + relPath;
 	}
-
-	fs.readdir(filepath,function (err,list){
+  
+	fs.readdir(fullpath,function (err,list){
     if(!err){
       var files = [];
       for (var i = 0; i < list.length; i++) {
         var fileData = {};
-        fileData.filename = list[i];
+        fileData.filepath = relPath + '/' + list[i];
         try{
-          var stats = fs.statSync(filepath + '/' + list[i]);
+          var stats = fs.statSync(fullpath + '/' + list[i]);
           fileData.isDirectory = stats.isDirectory();
           fileData.size = stats.size;
           files.push(fileData);
         }
         catch(e){
-          console.log('Error reading file stats for ' + fileData.filename + ': ' + e);
+          console.log('Error reading file stats for ' + fileData.filepath + ': ' + e);
         }
       };
       return callback({'files':files});
     }
     else{
-      return callback({'err':'problem with reading filepath: ' + filepath});
+      return callback({'err':'problem with reading filepath: ' + fullpath});
     }
   });
 };

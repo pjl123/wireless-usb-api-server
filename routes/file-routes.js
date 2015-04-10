@@ -8,7 +8,7 @@
 exports.getFileListing = function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            fileDelivery.getFileListing(request.query.path, userId, function (responseData){
+            fileDelivery.getFileListing(request.query.fileId, userId, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }

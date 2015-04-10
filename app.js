@@ -4,7 +4,7 @@
  * App Settings
  */
 var port = 3000;
-var mongoServer = 'mongodb://192.168.1.250/wireless-usb';
+var mongoServer = 'mongodb://192.168.1.146/wireless-usb';
 //var mongoServer = 'mongodb://192.168.42.1/wireless-usb';
 
 /*
