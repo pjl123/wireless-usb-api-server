@@ -160,12 +160,19 @@ exports.getManyFiles = function (argument) {
 	// body...
 };
 
-exports.setupWebStream = function (relPath, callback){
+exports.setupWebStream = function (fileId, callback){
 	// TODO verify user has access to the file
 
-	usb.setupWebStream(relPath, function (data){
-		return callback(data);
-	});
+	getFile({ '_id' : fileId }, function (err, file){
+		if(!err){
+			usb.setupWebStream(file.filepath, function (data){
+				return callback(data);
+			});
+		}
+		else{
+			return callback({ 'err' : err});
+		}
+	})
 };
 
 // TODO implement

@@ -86,7 +86,7 @@ exports.getSingleFile = function (request, response, next){
 exports.setupWebStream = function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            fileDelivery.setupWebStream(request.query.path, function (responseData){
+            fileDelivery.setupWebStream(request.query.fileId, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }
