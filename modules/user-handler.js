@@ -169,40 +169,20 @@ exports.updateUser = function (userId, updateId, userObj, callback) {
 	});
 };
 
-exports.getGroupsByUser = function (userId, targetId, callback){
+exports.getUsersByGroup = function (userId, groupId, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
-			User.findOne({ '_id' : targetId }, function(err, user){
+			User.find({ 'groups' : { $in : [groupId] } }, function(err, users){
 				if(err){
 					return callback({'err':err});
 				}
-				else if(user === null){
-					return callback({'err':'User does not exist.'});
-				}
 				else{
-					var data = {'groups':[]};
-					var numCalls = user.groups.length;
-					for (var i = 0; i < user.groups.length; i++) {
-						groups.getGroup(userId, user.groups[i], function (err, group){
-							if(err === null){
-								data.groups.push(group);
-							}
-							// TODO if there is an error what do I do?
-
-							numCalls = numCalls - 1;
-							if(numCalls <= 0){
-								return callback(data);
-							}
-						});
-					}
-					if(numCalls == 0){
-						return callback(data);
-					}
+					return callback({'users':users});
 				}
 			});
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "GET /groupsByUser/:id" call'});
+			return callback({'err': 'Admin priviledges required for "GET /usersByGroup/:id" call'});
 		}
 	});
 }
@@ -245,7 +225,7 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 									}
 									else{
 										// Remove user if it doesn't exist
-										exports.removeUsersFromGroup(userId, targetId, [currGroup], 0, function(){});
+										exports.removeGroupsFromUser(userId, targetId, [currGroup], 0, function(){});
 									}
 								});
 							}

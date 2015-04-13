@@ -110,11 +110,11 @@ exports.update = function (request, response, next){
     });
 }
 
-// Get the groups the given user is part of
-exports.getGroupsByUser = function (request, response, next){
+// Get the users the given group contains
+exports.getUsersByGroup = function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            users.getGroupsByUser(userId, request.params.id, function (responseData){
+            users.getUsersByGroup(userId, request.params.id, function (responseData){
                 if(responseData.err){
                     response.status(400);
                 }

@@ -121,7 +121,7 @@ exports.updateGroup = function (userId, groupId, groupObj, callback) {
 				group.canDownload = groupObj.canDownload;
 			}
 
-			group.save(function (err, updatedUser){
+			group.save(function (err, updatedGroup){
 				if(err){
 					return callback({'err': err});
 				}
@@ -129,16 +129,20 @@ exports.updateGroup = function (userId, groupId, groupObj, callback) {
 					try{
 						// Add or remove users
 						if(groupObj.addUserIds !== undefined){
-							exports.addUsersToGroup(userId, groupId, groupObj.addUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+							addUsersToGroup(userId, groupId, groupObj.addUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
 						}
 
 						if(groupObj.removeUserIds !== undefined){
-							exports.removeUsersFromGroup(userId, groupId, groupObj.removeUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+							removeUsersFromGroup(userId, groupId, groupObj.removeUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
 						}
 
-						// Remove files
+						// Add or remove files
+						if(groupObj.addFileIds !== undefined){
+							addFilesFromGroup(userId, groupId, groupObj.addFileIds, function (data) {if(data.err !== undefined) throw data.err;});
+						}
+
 						if(groupObj.removeFileIds !== undefined){
-							exports.removeFilesFromGroup(userId, groupId, groupObj.removeFileIds, function (data) {if(data.err !== undefined) throw data.err;});
+							removeFilesFromGroup(userId, groupId, groupObj.removeFileIds, function (data) {if(data.err !== undefined) throw data.err;});
 						}
 					}
 					catch(err){
@@ -151,45 +155,25 @@ exports.updateGroup = function (userId, groupId, groupObj, callback) {
 	});
 };
 
-exports.getUsersByGroup = function (userId, groupId, callback){
+exports.getGroupsByUser = function (userId, targetId, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			Group.findOne({ '_id' : groupId }, function(err, group){
+			Group.find({ 'users' : { $in : [targetId] } }, function(err, groups){
 				if(err){
 					return callback({'err':err});
 				}
-				else if(group === null){
-					return callback({'err':'Group does not exist.'});
-				}
 				else{
-					var data = {'users':[]};
-					var numCalls = group.users.length;
-					for (var i = 0; i < group.users.length; i++) {
-						users.getUser(userId, group.users[i], function (err, user){
-							if(err === null){
-								data.users.push(user);
-							}
-							// TODO if there is an error what do I do?
-
-							numCalls = numCalls - 1;
-							if(numCalls <= 0){
-								return callback(data);
-							}
-						});
-					}
-					if(numCalls == 0){
-						return callback(data);
-					}
+					return callback({'groups':groups});
 				}
 			});
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "GET /usersByGroup/:id" call'});
+			return callback({'err': 'Admin priviledges required for "GET /groupsByUser/:id" call'});
 		}
 	});
 }
 
-exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback){
+var addUsersToGroup = function (userId, groupId, addUserIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
 			Group.findOne({ '_id' : groupId }, function(err, group){
@@ -243,7 +227,7 @@ exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback)
 	});
 }
 
-exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, callback){
+var removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
 			Group.findOne({ '_id' : groupId }, function(err, group){
@@ -284,47 +268,28 @@ exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, c
 	});
 }
 
-// TODO also return files if userId is in the group
-exports.getFilesByGroup = function (userId, groupId, callback){
+exports.getGroupsByFile = function (userId, fileId, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			Group.findOne({ '_id' : groupId }, 'files', function(err, group){
+			Group.find({ 'files' : { $in : [fileId] } }, function(err, groups){
 				if(err){
 					return callback({'err':err});
 				}
-				else if(group === null){
-					return callback({'err':'Group does not exist.'});
-				}
 				else{
-					// run stats on files if they were updated too long ago
-					var sevenDays = 604800000; // 7 days in milliseconds
-					for (var i = 0; i < group.files.length; i++) {
-						if(group.files[i].lastUpdated.getTime() + sevenDays > Date.now()){
-							fileDelivery.getFileStats(group.files[i].filepath, function (stats){
-								if(stats.err === undefined){
-									group.files[i].size = stats.size;
-									group.files[i].lastUpdated = Date.now();
-								}
-								else{
-									// TODO remove file from group if there's an error?
-								}
-							});
-						}
-					};
-					return callback(group);
+					return callback({'groups':groups});
 				}
 			});
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "GET /filesByGroup/:id" call'});
+			return callback({'err': 'Admin priviledges required for "GET /groupsByFile/:id" call'});
 		}
 	});
 }
 
-exports.addFilesToGroup = function (userId, groupId, addFiles, callback){
+exports.addFilesToGroup = function (userId, groupId, addFileIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			Group.findOne({ '_id' : groupId }, function (err, group){
+			Group.findOne({ '_id' : groupId }, function(err, group){
 				if(err){
 					return callback({'err':err});
 				}
@@ -332,27 +297,37 @@ exports.addFilesToGroup = function (userId, groupId, addFiles, callback){
 					return callback({'err':'Group does not exist.'});
 				}
 				else{
-					for (var i = 0; i < addFiles.length; i++) {
+					// Add all files and remove bad ids after save
+					for (var i = 0; i < addFileIds.length; i++) {
 						try{
-							var exists = false;
-							for (var i = 0; i < group.files.length; i++) {
-								if(group.files[i].filepath === addFiles[i].filepath)
-									exists = true;
-							};
-							// Add file if it doesn't already exist in the record
-							if(!exists)
-								group.files.push(addFiles[i]);
+							group.files.addToSet(addFileIds[i]);
 						}
 						catch(err){
-							return callback({'err':err});
+							// Should only catch ids being added that are not the right Mongo format
+							console.log("Error adding id: " + addFileIds[i]);
+							addFileIds.splice(i,1);
 						}
-					}
-
+					};
 					group.save(function (err, updatedGroup){
 						if(err){
 							return callback({'err':err});
 						}
 						else{
+							for (var i = 0; i < addFileIds.length; i++) {
+								var currFile = addFileIds[i]
+								fileDelivery.getFile(userId, addFileIds[i], function (err, file){
+									if(!err){
+										if(flag == 1){
+											// TODO shouldn't be an error, but what if?
+											fileDelivery.addGroupsToFile(userId, file.id, [groupId], 0, function(){});
+										}
+									}
+									else{
+										// Remove user if it doesn't exist
+										exports.removeFilesFromGroup(userId, groupId, [currFile], 0, function(){});
+									}
+								});
+							}
 							return callback(updatedGroup);
 						}
 					});
@@ -365,10 +340,10 @@ exports.addFilesToGroup = function (userId, groupId, addFiles, callback){
 	});
 }
 
-exports.removeFilesFromGroup = function (userId, groupId, removeFileIds, callback){
+exports.removeFilesFromGroup = function (userId, groupId, removeFileIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			Group.findOne({ '_id' : groupId }, function (err, group){
+			Group.findOne({ '_id' : groupId }, function(err, group){
 				if(err){
 					return callback({'err':err});
 				}
@@ -377,8 +352,12 @@ exports.removeFilesFromGroup = function (userId, groupId, removeFileIds, callbac
 				}
 				else{
 					for (var i = 0; i < removeFileIds.length; i++) {
+						if(flag == 1){
+							// TODO shouldn't be an error, but what if?
+							fileDelivery.removeGroupsFromFile(userId, removeFileIds[i], [groupId], 0, function(){});
+						}
 						try{
-							group.files.id(removeFileIds[i]).remove();
+							group.users.remove(removeFileIds[i]);
 						}
 						catch(err){
 							return callback({'err':err});

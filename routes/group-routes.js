@@ -110,11 +110,11 @@ exports.update = function (request, response, next){
     });
 }
 
-// Get the users the given group contains
-exports.getUsersByGroup = function (request, response, next){
+// Get the groups the given user is part of
+exports.getGroupsByUser = function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            groups.getUsersByGroup(userId, request.params.id, function (responseData){
+            groups.getGroupsByUser(userId, request.params.id, function (responseData){
                 if(responseData.err){
                     response.status(400);
                 }
@@ -132,53 +132,11 @@ exports.getUsersByGroup = function (request, response, next){
     });
 }
 
-// Add array of user ids to the given group
-exports.addUsersToGroup = function (request, response, next){
+// Get the groups the given user is part of
+exports.getGroupsByFile = function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
         if(authenticated){
-            groups.addUsersToGroup(userId, request.params.id, request.body, 1, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-}
-
-// Remove array of user ids from the given group
-exports.removeUsersFromGroup = function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.removeUsersFromGroup(userId, request.params.id, request.body, 1, function (responseData){
-                if(responseData.err !== undefined){
-                    response.status(400);
-                }
-                else{
-                    response.status(201);
-                }
-                response.jsonp(responseData);
-            });
-        }
-        else{
-            response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
-        }
-    });
-}
-
-// Get the users the given group contains
-exports.getFilesByGroup = function (request, response, next){
-    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
-        if(authenticated){
-            groups.getFilesByGroup(userId, request.params.id, function (responseData){
+            groups.getGroupsByFile(userId, request.params.id, function (responseData){
                 if(responseData.err){
                     response.status(400);
                 }

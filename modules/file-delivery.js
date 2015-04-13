@@ -15,7 +15,7 @@ var groups = require('./group-handler');
 exports.getFileListing = function (fileId, userId, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			getFile({'_id' : fileId}, function (err, file){
+			exports.getFile(fileId, function (err, file){
 				// If file does not exist, do the listing for the base directory
 				var relPath;
 				var parentDirectory;
@@ -43,10 +43,16 @@ exports.getFileListing = function (fileId, userId, callback){
 							}
 							// Retrieve the file from the database since it already exists
 							else{
-								getFile({ 'filepath' : filepath }, function (err, file){
+								File.findOne({ 'filepath' : filepath }, function (err, file){
 									if(!err){
-										filesToReturn.files.push(file);
-										numFiles --;
+										// run file stats if not updated recently
+										var sevenDays = 604800000; // 7 days in milliseconds
+										if(file.lastUpdated.getTime() + sevenDays > Date.now()){
+											updateFile(file, function (updatedFile){
+												file = updatedFile;
+												numFiles --;
+											});
+										}
 									}
 									if(numFiles <= 0){
 										return callback(filesToReturn);
@@ -64,88 +70,198 @@ exports.getFileListing = function (fileId, userId, callback){
 	});
 };
 
-exports.addFilesToGroup = function (relPaths, userId, groupId, callback){
+exports.getFile = function (userId, fileId, callback) {
 	users.isAdmin(userId, function (result){
 		if(result){
-			var files = [];
-			var numPaths = relPaths.length;
-
-			for (var i = 0; i < relPaths.length; i++) {
-				var file = {};
-				file.filepath = relPaths[i];
-
-				exports.getFileStats(relPaths[i], function (stats){
-					if(stats.err === undefined){
-						file.isDirectory = stats.isDirectory();
-						file.size = stats.size;
-						file.lastUpdated = Date.now();
-						files.push(file);
-					}
-
-					numPaths = numPaths - 1;
-					if(numPaths <= 0){
-						groups.addFilesToGroup(userId, groupId, files, function (result){
-							return callback(result);
-						});
-					}
-				});
-			}
-			if(numPaths <= 0){
-				return callback({'err':'No paths given to add to the group'});
-			}
+			File.findOne({'_id' : fileId}, function (err, file){
+				if(err){
+					return callback(true, {'err': err});
+				}
+				else if(file === null){
+					return callback(true, {'err': 'No file with given id: ' + fileId});
+				}
+				else{
+					return callback(err, file);
+				}
+			});
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "POST /filesToGroup" call'});
+			return callback(true, {'err': 'Admin priviledges required for "GET /files/:id" call'});
 		}
-	});
-}
-
-exports.addGroupsToFile = function (relPath, userId, groupIds, callback){
-	users.isAdmin(userId, function (result){
-		if(result){
-			var numGroups = groupIds.length;
-			var groupsAdded = [];
-
-			for (var i = 0; i < groupIds.length; i++) {
-				var file = {};
-				file.filepath = relPath;
-
-				exports.getFileStats(relPath, function (stats){
-					if(stats.err === undefined){
-						file.isDirectory = stats.isDirectory();
-						file.size = stats.size;
-						file.lastUpdated = Date.now();
-
-						groups.addFilesToGroup(userId, groupIds[i], [file], function (result){
-							numGroups = numGroups - 1;
-								if(result.err === undefined){
-									groupsAdded.push(result.id);
-								}
-								if(numGroups <= 0){
-									return callback({'success':'Added file to groups: ' + groupsAdded});
-								}
-						});
-					}
-					else{
-						return callback(stats);
-					}
-				});
-			};
-			if(numGroups <= 0){
-				return callback({'err':'No groups given to add to the file'});
-			}
-		}
-		else{
-			return callback({'err': 'Admin priviledges required for "POST /groupsToFile" call'});
-		}
-	});
-}
-
-exports.getFileStats = function (relPath, callback){
-	usb.getFileStats(relPath, function (stats){
-		return callback(stats);
 	});
 };
+
+exports.getAllFiles = function (userId, callback){
+		users.isAdmin(userId, function (result){
+		if(result){
+			File.find({}, function (err, files){
+				return callback(err, files);
+			});
+		}
+		else{
+			return callback(true, {'err': 'Admin priviledges required for "GET /files" call'});
+		}
+	});
+}
+
+exports.updateFile = function (userId, fileId, fileObj, callback){
+	exports.getFile(userId, fileId, function (err, file){
+		if(err){
+			if(file !== null){
+				return callback(file);
+			}
+			else{
+				return callback({'err': err});
+			}
+		}
+		else{
+			updateFile(file, function (updatedFile){
+				if(updatedFile.err){
+					return callback({'err': err});
+				}
+				else{
+					try{
+						// Add or remove groups
+						if(fileObj.addGroupIds !== undefined){
+							exports.addGroupsToFile(userId, fileId, fileObj.addGroupIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+						}
+
+						if(fileObj.removeGroupIds !== undefined){
+							exports.removeGroupsFromFile(userId, fileId, fileObj.removeGroupIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+						}
+					}
+					catch(err){
+						return callback(err);
+					}
+					return callback({'success':'Update was successful.'});
+				}
+			});
+		}
+	});
+};
+
+exports.getFilesByGroup = function (userId, groupId, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			File.find({ 'groups' : { $in : [groupId] } }, function (err, files){
+				if(err){
+					return callback({'err':err});
+				}
+				else{
+					var numFiles = files.length;
+					var filesToReturn = {'files':[]};
+					for (var i = 0; i < files.length; i++) {
+						updateFile(files[i], function (updatedFile){
+							if(updatedFile.err === undefined){
+								filesToReturn.files.push(updatedFile);
+							}
+							numFiles --;
+							if(numFiles <= 0)
+								return callback(filesToReturn);
+						})
+					}
+					if(numFiles <= 0)
+						return callback(filesToReturn);
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "GET /filesByGroup/:id" call'});
+		}
+	});
+}
+
+exports.addGroupsToFile = function (userId, fileId, groupIds, flag, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			File.findOne({ '_id' : fileId }, function(err, file){
+				if(err){
+					return callback({'err':err});
+				}
+				else if(file === null){
+					return callback({'err':'File does not exist.'});
+				}
+				else{
+					// Add all groups and remove bad ids after save
+					for (var i = 0; i < groupIds.length; i++) {
+						try{
+							file.groups.addToSet(groupIds[i]);
+						}
+						catch(err){
+							// Should only catch ids being added that are not the right Mongo format
+							console.log("Error adding id: " + groupIds[i]);
+							groupIds.splice(i,1);
+						}
+					};
+					file.save(function (err, updatedFile){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							for (var i = 0; i < groupIds.length; i++) {
+								var currGroup = groupIds[i]
+								groups.getGroup(userId, groupIds[i], function (err,group){
+									if(!err){
+										if(flag == 1){
+											// TODO shouldn't be an error, but what if?
+											groups.addFilesToGroup(userId, group.id, [fileId], 0, function(){});
+										}
+									}
+									else{
+										// Remove file if it doesn't exist
+										exports.removeGroupsFromFile(userId, fileId, [currGroup], 0, function(){});
+									}
+								});
+							}
+							return callback(updatedFile);
+						}
+					});
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "POST /groupsToFile/:id" call'});
+		}
+	});
+}
+
+exports.removeGroupsFromFile  = function (userId, fileId, removeGroupIds, flag, callback){
+	users.isAdmin(userId, function (result){
+		if(result){
+			exports.getFile(userId, fileId, function(err, file){
+				if(err){
+					return callback({'err':err});
+				}
+				else{
+					for (var i = 0; i < removeGroupIds.length; i++) {
+						if(flag == 1){
+							// TODO shouldn't be an error, but what if?
+							groups.removeFilesFromGroup(userId, removeGroupIds[i], [fileId], 0, function(){});
+						}
+						try{
+							file.groups.remove(removeGroupIds[i]);
+						}
+						catch(err){
+							return callback({'err':err});
+						}
+					}
+
+					file.save(function (err, updatedFile){
+						if(err){
+							return callback({'err':err});
+						}
+						else{
+							return callback(updatedFile);
+						}
+					});
+				}
+			});
+		}
+		else{
+			return callback({'err': 'Admin priviledges required for "DELETE /groupsFromFile/:id" call'});
+		}
+	});
+}
 
 exports.getSingleFile = function (relPath, callback){
 	// TODO verify this user has access to file
@@ -160,10 +276,10 @@ exports.getManyFiles = function (argument) {
 	// body...
 };
 
-exports.setupWebStream = function (fileId, callback){
+exports.setupWebStream = function (userId, fileId, callback){
 	// TODO verify user has access to the file
 
-	getFile({ '_id' : fileId }, function (err, file){
+	exports.getFile(userId, fileId, function (err, file){
 		if(!err){
 			usb.setupWebStream(file.filepath, function (data){
 				return callback(data);
@@ -185,6 +301,36 @@ exports.uploadFile = function (argument) {
 	// body...
 };
 
+var updateFile = function (file, callback){
+	var sevenDays = 604800000; // 7 days in milliseconds
+	if(file.lastUpdated.getTime() + sevenDays > Date.now()){
+		getFileStats(file, function (stats){
+			// TODO remove file from database if error at any point?
+			if(stats.err === undefined){
+				file.size = stats.size;
+				file.lastUpdated = Date.now();
+				file.save(function (err, updatedFile){
+					if(!err){
+						return callback(updatedFile);
+					}
+					else{
+						return callback({'err':err});
+					}
+				});
+			}
+			else{
+				return callback(stats);
+			}
+		});
+	}
+}
+
+var getFileStats = function (file, callback){
+	usb.getFileStats(file.filepath, function (stats){
+		return callback(stats);
+	});
+};
+
 var createFile = function (file, callback){
 	var newFile = new File();
 	// TODO implement creating/storing/reading usb identifiers
@@ -202,11 +348,5 @@ var createFile = function (file, callback){
 		else{
 			return callback(createdFile);
 		}
-	});
-}
-
-var getFile = function (query, callback){
-	File.findOne(query, function (err, file){
-		return callback(err, file);
 	});
 }

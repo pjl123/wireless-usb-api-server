@@ -130,14 +130,21 @@ app.get('/requestAccessToken', function (request, response, next){
  * File Delivery Module
  */
 
-// Relative file path included in request query
+// File id included in request query
 app.get('/fileListing', fileRoutes.getFileListing);
 
-app.post('/addFilesToGroup', jsonParser, fileRoutes.addFilesToGroup);
+// Get single file by id
+app.get('/files/:id', fileRoutes.get);
 
-app.post('/addGroupsToFile', jsonParser, fileRoutes.addGroupsToFile);
+// Get all files
+app.get('/files', fileRoutes.getAll);
 
-// Relative file path included in request query
+// Update file fields :id is the Mongo ObjectId
+app.post('/files/:id', jsonParser, fileRoutes.update);
+
+// Get the files the given group contains
+app.get('/filesByGroup/:id', fileRoutes.getFilesByGroup);
+
 app.get('/getSingleFile', fileRoutes.getSingleFile);
 
 app.get('/setupWebStream', fileRoutes.setupWebStream);
@@ -161,14 +168,8 @@ app.delete('/users/:id', userRoutes.delete);
 // Update user fields :id is the Mongo ObjectId
 app.post('/users/:id', jsonParser, userRoutes.update);
 
-// Get the groups the given user is part of
-app.get('/groupsByUser/:id', userRoutes.getGroupsByUser);
-
-// Add array of group ids to the given user
-// app.post('/groupsToUser/:id', jsonParser, userRoutes.addGroupsToUser);  // MOVED TO UPDATE CALL
-
-// Remove array of group ids from the given user
-// app.delete('/groupsFromUser/:id', jsonParser, userRoutes.removeGroupsFromUser);  // MOVED TO UPDATE CALL
+// Get the users the given group contains
+app.get('/usersByGroup/:id', userRoutes.getUsersByGroup);
 
 /*
  * Group Module
@@ -189,20 +190,11 @@ app.delete('/groups/:id', groupRoutes.delete);
 // Update group
 app.post('/groups/:id', jsonParser, groupRoutes.update);
 
-// Get the users the given group contains
-app.get('/usersByGroup/:id', groupRoutes.getUsersByGroup);
+// Get the groups the given user is part of
+app.get('/groupsByUser/:id', groupRoutes.getGroupsByUser);
 
-// Add array of user ids to the given group
-// app.post('/usersToGroup/:id', jsonParser, groupRoutes.addUsersToGroup);  // MOVED TO UPDATE CALL
-
-// Remove array of user ids from the given group
-// app.delete('/usersFromGroup/:id', jsonParser, groupRoutes.removeUsersFromGroup);  // MOVED TO UPDATE CALL
-
-app.get('/filesByGroup/:id', groupRoutes.getFilesByGroup);
-
-// app.post('/filesToGroup/:id', jsonParser, groupRoutes.addFilesToGroup);  // MOVED TO UPDATE CALL
-
-// app.delete('/filesFromGroup/:id', jsonParser, groupRoutes.removeFilesFromGroup);  // MOVED TO UPDATE CALL
+// Get the groups the given file is part of
+app.get('/groupsByFile/:id', groupRoutes.getGroupsByFile);
 
  /*
   * Network Module
