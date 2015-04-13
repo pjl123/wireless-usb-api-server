@@ -155,9 +155,21 @@ exports.updateGroup = function (userId, groupId, groupObj, callback) {
 	});
 };
 
+exports.isUserInGroup = function (userId, groupId, callback){
+	Group.findOne({'_id' : groupId}, function (err, group){
+		if(err || group === null){
+			return callback(false);
+		}
+		else{
+			return callback(group.users.indexOf(userId) >= 0);
+		}
+	})
+}
+
 exports.getGroupsByUser = function (userId, targetId, callback){
 	users.isAdmin(userId, function (result){
-		if(result){
+		// Get groups if user is an admin or if the user is asking for their own groups
+		if(result || userId === targetId){
 			Group.find({ 'users' : { $in : [targetId] } }, function(err, groups){
 				if(err){
 					return callback({'err':err});

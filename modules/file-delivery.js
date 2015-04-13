@@ -15,7 +15,7 @@ var groups = require('./group-handler');
 exports.getFileListing = function (fileId, userId, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			exports.getFile(fileId, function (err, file){
+			exports.getFile(userId, fileId, function (err, file){
 				// If file does not exist, do the listing for the base directory
 				var relPath;
 				var parentDirectory;
@@ -142,32 +142,35 @@ exports.updateFile = function (userId, fileId, fileObj, callback){
 
 exports.getFilesByGroup = function (userId, groupId, callback){
 	users.isAdmin(userId, function (result){
-		if(result){
-			File.find({ 'groups' : { $in : [groupId] } }, function (err, files){
-				if(err){
-					return callback({'err':err});
-				}
-				else{
-					var numFiles = files.length;
-					var filesToReturn = {'files':[]};
-					for (var i = 0; i < files.length; i++) {
-						updateFile(files[i], function (updatedFile){
-							if(updatedFile.err === undefined){
-								filesToReturn.files.push(updatedFile);
-							}
-							numFiles --;
-							if(numFiles <= 0)
-								return callback(filesToReturn);
-						})
+		groups.isUserInGroup(userId, groupId, function (inGroup){
+			// Get files if the user is an admin or if they are in the group
+			if(!result && !inGroup){
+				return callback({'err': 'User does not have permissions required for "GET /filesByGroup/:id" call'});
+			}
+			else{
+				File.find({ 'groups' : { $in : [groupId] } }, function (err, files){
+					if(err){
+						return callback({'err':err});
 					}
-					if(numFiles <= 0)
-						return callback(filesToReturn);
-				}
-			});
-		}
-		else{
-			return callback({'err': 'Admin priviledges required for "GET /filesByGroup/:id" call'});
-		}
+					else{
+						var numFiles = files.length;
+						var filesToReturn = {'files':[]};
+						for (var i = 0; i < files.length; i++) {
+							updateFile(files[i], function (updatedFile){
+								if(updatedFile.err === undefined){
+									filesToReturn.files.push(updatedFile);
+								}
+								numFiles --;
+								if(numFiles <= 0)
+									return callback(filesToReturn);
+							})
+						}
+						if(numFiles <= 0)
+							return callback(filesToReturn);
+					}
+				});
+			}
+		})
 	});
 }
 
