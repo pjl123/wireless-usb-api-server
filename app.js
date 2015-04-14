@@ -10,6 +10,7 @@ var mongoServer = 'mongodb://192.168.1.146/wireless-usb';
 /*
  * Express Dependencies
  */
+var https = require('https');
 var express = require('express');
 var fs = require('fs');
 var bodyParser = require('body-parser');
@@ -204,5 +205,10 @@ app.get('/groupsByFile/:id', groupRoutes.getGroupsByFile);
 /*
  * Start it up
  */
-app.listen(process.env.PORT || port);
+var options = {
+    key: fs.readFileSync('apiServer.pem'),
+    cert: fs.readFileSync('apiServerPublic.pem')
+};
+
+https.createServer(options,app).listen(process.env.PORT || port);
 console.log('Express started on port ' + port);
