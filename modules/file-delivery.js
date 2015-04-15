@@ -17,15 +17,13 @@ exports.getFileListing = function (fileId, userId, callback){
 		if(result){
 			exports.getFile(userId, fileId, function (err, file){
 				// If file does not exist, do the listing for the base directory
-				var relPath;
-				var parentDirectory;
+				var relPath = '';
+				var parentDirectory = null;
 				if(!err){
 					relPath = file.filepath;
-					parentDirectory = file.id;
-				}
-				else{
-					relPath = '';
-					parentDirectory = null;
+					// never store the usbDrive1 or usbDrive2 directories as parentDirectory references
+					if(file.filepath.indexOf('usbDrive1') < 0 && file.filepath.indexOf('usbDrive2') < 0)
+						parentDirectory = file.id;
 				}
 				usb.getFileListing(relPath, function (fileData){
 					var filesToReturn = { 'files':[] };
@@ -95,7 +93,7 @@ exports.getAllFiles = function (userId, callback){
 		users.isAdmin(userId, function (result){
 		if(result){
 			File.find({}, function (err, files){
-				return callback(err, files);
+				return callback(err, {'files':files});
 			});
 		}
 		else{

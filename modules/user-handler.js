@@ -86,7 +86,7 @@ exports.getAllUsers = function (userId, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
 			User.find({}, function (err, users){
-				return callback(err, users);
+				return callback(err, {'users':users});
 			});
 		}
 		else{

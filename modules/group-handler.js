@@ -69,7 +69,7 @@ exports.getAllGroups = function (userId, callback) {
 	users.isAdmin(userId, function (result){
 		if(result){
 			Group.find({}, function (err, groups){
-				return callback(err, groups);
+				return callback(err, {'groups':groups});
 			});
 		}
 		else{
