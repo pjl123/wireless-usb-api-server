@@ -43,17 +43,20 @@ exports.getFileListing = function (fileId, userId, callback){
 							else{
 								File.findOne({ 'filepath' : filepath }, function (err, file){
 									if(!err){
-										// run file stats if not updated recently
-										var sevenDays = 604800000; // 7 days in milliseconds
-										if(file.lastUpdated.getTime() + sevenDays > Date.now()){
-											updateFile(file, function (updatedFile){
-												file = updatedFile;
-												numFiles --;
-											});
-										}
+										updateFile(file, function (updatedFile){
+											if(updatedFile.err === undefined){
+												filesToReturn.files.push(updatedFile);
+											}
+											numFiles --;
+											if(numFiles <= 0)
+												return callback(filesToReturn);
+										});
 									}
-									if(numFiles <= 0){
-										return callback(filesToReturn);
+									else{
+										numFiles --;
+										if(numFiles <= 0){
+											return callback(filesToReturn);
+										}
 									}
 								});
 							}
@@ -161,7 +164,7 @@ exports.getFilesByGroup = function (userId, groupId, callback){
 								numFiles --;
 								if(numFiles <= 0)
 									return callback(filesToReturn);
-							})
+							});
 						}
 						if(numFiles <= 0)
 							return callback(filesToReturn);
