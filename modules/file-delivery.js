@@ -207,6 +207,10 @@ exports.addGroupsToFile = function (userId, fileId, groupIds, flag, callback){
 											// TODO shouldn't be an error, but what if?
 											groups.addFilesToGroup(userId, group.id, [fileId], 0, function(){});
 										}
+										// Make sure to add all the parent directories so that the file is accesible from the user interfaces.
+										if(file.parentDirectory !== null){
+											exports.addGroupsToFile(userId, file.parentDirectory, groupIds, 1, function(){});
+										}
 									}
 									else{
 										// Remove file if it doesn't exist

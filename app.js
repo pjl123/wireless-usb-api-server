@@ -103,6 +103,18 @@ conn.once('open', function (callback) {
             console.log('admin exists already');
         }
     });
+    var webUser = new User({
+        name: 'webUser',
+        accessToken: 'web'
+    });
+    webUser.save(function(err, webUser){
+        if(!err){
+            console.log('Created web user:\n' + webUser);
+        }
+        else{
+            console.log('Web user exists already');
+        }
+    });
 });
 
 /*

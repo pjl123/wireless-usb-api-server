@@ -129,24 +129,24 @@ exports.updateGroup = function (userId, groupId, groupObj, callback) {
 					try{
 						// Add or remove users
 						if(groupObj.addUserIds !== undefined){
-							addUsersToGroup(userId, groupId, groupObj.addUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+							exports.addUsersToGroup(userId, groupId, groupObj.addUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
 						}
 
 						if(groupObj.removeUserIds !== undefined){
-							removeUsersFromGroup(userId, groupId, groupObj.removeUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+							exports.removeUsersFromGroup(userId, groupId, groupObj.removeUserIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
 						}
-
 						// Add or remove files
 						if(groupObj.addFileIds !== undefined){
-							addFilesFromGroup(userId, groupId, groupObj.addFileIds, function (data) {if(data.err !== undefined) throw data.err;});
+							exports.addFilesToGroup(userId, groupId, groupObj.addFileIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
 						}
 
 						if(groupObj.removeFileIds !== undefined){
-							removeFilesFromGroup(userId, groupId, groupObj.removeFileIds, function (data) {if(data.err !== undefined) throw data.err;});
+							exports.removeFilesFromGroup(userId, groupId, groupObj.removeFileIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
 						}
 					}
 					catch(err){
-						return callback(err);
+						console.log(err);
+						return callback({'err':err});
 					}
 					return callback({'success':'Update was successful.'});
 				}
@@ -185,7 +185,7 @@ exports.getGroupsByUser = function (userId, targetId, callback){
 	});
 }
 
-var addUsersToGroup = function (userId, groupId, addUserIds, flag, callback){
+exports.addUsersToGroup = function (userId, groupId, addUserIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
 			Group.findOne({ '_id' : groupId }, function(err, group){
@@ -239,7 +239,7 @@ var addUsersToGroup = function (userId, groupId, addUserIds, flag, callback){
 	});
 }
 
-var removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, callback){
+exports.removeUsersFromGroup = function (userId, groupId, removeUserIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
 			Group.findOne({ '_id' : groupId }, function(err, group){
