@@ -9,7 +9,7 @@ exports.getFileListing = function (request, response, next){
     var userId = request.get('Authorization');
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
-            fileDelivery.getFileListing(request.query.fileId, userId, function (responseData){
+            fileDelivery.getFileListing(request.params.id, userId, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }
@@ -111,11 +111,11 @@ exports.getFilesByGroup = function (request, response, next){
     });
 }
 
-exports.getSingleFile = function (request, response, next){
+exports.downloadFile = function (request, response, next){
     var userId = request.get('Authorization');
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
-            fileDelivery.getSingleFile(request.query.path, function (responseData){
+            fileDelivery.downloadFile(userId, request.query.groupId, request.params.id, function (responseData){
                 if(responseData.err === undefined){
                     responseData.on('open', function () {
                         responseData.pipe(response);
@@ -129,6 +129,24 @@ exports.getSingleFile = function (request, response, next){
                     response.status(400);
                     response.jsonp(responseData);
                 }
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'User not authorized.'});
+        }
+    });
+}
+
+exports.uploadFile = function (request, response, next){
+    var userId = request.get('Authorization');
+    auth.isAuthorized(userId, function (authorized){
+        if(authorized){
+            fileDelivery.uploadFile(userId, request.query.groupId, request.params.id, request.query.filename, request.body, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                response.jsonp(responseData);
             });
         }
         else{

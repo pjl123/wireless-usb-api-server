@@ -28,7 +28,7 @@ exports.createUserToken = function (request, response, next){
 
 // Create a new user
 exports.create = function (request, response, next){
-    users.createUser(request.params.token, request.body, function (responseData){
+    users.createUser(request.query.token, request.body, function (responseData){
         if(responseData.err !== undefined){
             response.status(400);
         }

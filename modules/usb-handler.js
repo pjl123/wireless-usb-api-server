@@ -57,7 +57,7 @@ exports.getFileStats = function (relPath, callback){
   });
 }
 
-exports.getSingleFile = function (relPath, callback){
+exports.downloadFile = function (relPath, callback){
   if((relPath.trim()).length === 0){
     return callback({'err':'no filepath given'});
   }
@@ -66,9 +66,20 @@ exports.getSingleFile = function (relPath, callback){
   return callback(fs.createReadStream(filepath));
 };
 
-// TODO implement
-exports.getManyFiles = function (argument) {
-	// body...
+exports.uploadFile = function (relPath, contents, callback){
+  if((relPath.trim()).length === 0){
+    return callback({'err':'no filepath given'});
+  }
+
+  var filepath = usbPath + '/' + relPath;
+  fs.writeFile(filepath, contents, function (err){
+    if(err){
+      return callback({'err':err});
+    }
+    else{
+      return callback(relPath);
+    }
+  });
 };
 
 exports.setupWebStream = function (relPath, callback){
@@ -89,14 +100,4 @@ exports.setupWebStream = function (relPath, callback){
     console.log(err);
   }
   return callback({'filename':filename});
-};
-
-// TODO implement
-exports.createFileStream = function (argument) {
-	// body...
-};
-
-// TODO implement
-exports.uploadFile = function (argument) {
-	// body...
 };

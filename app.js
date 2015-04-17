@@ -147,7 +147,7 @@ app.get('/requestAccessToken', function (request, response, next){
  */
 
 // File id included in request query
-app.get('/fileListing', fileRoutes.getFileListing);
+app.get('/fileListing/:id', fileRoutes.getFileListing);
 
 // Get single file by id
 app.get('/files/:id', fileRoutes.get);
@@ -161,8 +161,13 @@ app.post('/files/:id', jsonParser, fileRoutes.update);
 // Get the files the given group contains
 app.get('/filesByGroup/:id', fileRoutes.getFilesByGroup);
 
-app.get('/getSingleFile', fileRoutes.getSingleFile);
+// Download the file with the given id
+app.get('/files/:id/download', fileRoutes.downloadFile);
 
+// Upload a file contents in body to parent diretory id param
+app.post('/files/:id/upload', fileRoutes.uploadFile);
+
+// Set up the web server file streaming
 app.get('/setupWebStream', fileRoutes.setupWebStream);
 
 /*
@@ -173,7 +178,7 @@ app.get('/setupWebStream', fileRoutes.setupWebStream);
 app.get('/createUserToken', userRoutes.createUserToken);
 
 // Create a new user
-app.post('/users/:token', jsonParser, userRoutes.create);
+app.post('/users', jsonParser, userRoutes.create);
 
 // Get single user by id
 app.get('/users/:id', userRoutes.get);

@@ -5,10 +5,48 @@
  */
 
 var groupSchema = require('../schemas/group-schema');
+var userSchema = require('../schemas/user-schema');
 var Group = groupSchema.Group;
+var User = userSchema.User;
 
 var users = require('./user-handler.js');
 var fileDelivery = require('./file-delivery.js');
+
+exports.canDownload = function (userId, groupId, callback){
+	Group.findOne({'_id': groupId}, function (err, group){
+		if(!err && group !== null){
+			User.findOne({'_id': userId}, function (err, user){
+				if(!err && user !== null){
+					return callback(group.canDownload && user.canDownload);
+				}
+				else{
+					return callback(false);
+				}
+			});
+		}
+		else{
+			return callback(false);
+		}
+	});
+};
+
+exports.canUpload = function (userId, groupId, callback){
+	Group.findOne({'_id': groupId}, function (err, group){
+		if(!err && group !== null){
+			User.findOne({'_id': userId}, function (err, user){
+				if(!err && user !== null){
+					return callback(group.canUpload && user.canUpload);
+				}
+				else{
+					return callback(false);
+				}
+			});
+		}
+		else{
+			return callback(false);
+		}
+	});
+};
 
 // Create group
 exports.createGroup = function (userId, groupObj, callback) {

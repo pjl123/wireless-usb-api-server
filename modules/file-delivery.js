@@ -271,20 +271,72 @@ exports.removeGroupsFromFile  = function (userId, fileId, removeGroupIds, flag, 
 	});
 }
 
-exports.getSingleFile = function (relPath, callback){
-	// TODO verify this user has access to file
-
-	usb.getSingleFile(relPath, function (data){
-		return callback(data);
+exports.downloadFile = function (userId, groupId, fileId, callback){
+	groups.canDownload(userId, groupId, function (canDownload){
+		if(canDownload){
+			File.findOne({'_id' : fileId}, function (err, file){
+				if(!err){
+					if(file.isDirectory){
+						return callback({'err': 'Cannot download a directory.'});
+					}
+					usb.downloadFile(file.filepath, function (data){
+						return callback(data);
+					});
+				}
+				else{
+					return callback({'err' : 'File does not exist.'});
+				}
+			})
+		}
+		else{
+			return callback({'err' : 'User does not have download permissions for requested file.'});
+		}
 	});
 };
 
-// TODO implement
-exports.getManyFiles = function (argument) {
-	// body...
+exports.uploadFile = function (userId, groupId, parentId, filename, contents, callback) {
+	groups.canUpload(userId, groupId, function (canUpload){
+		if(canUpload){
+			File.findOne({'_id':parentId}, function (err, parent){
+				if(!err){
+					var filepath = parent.filepath + '/' + filename;
+					// TODO how to do the file size?
+					var file = {
+						'filepath': filepath,
+						'isDirectory': false,
+						'parentDirectory': parentId,
+						'size': 0
+					};
+					createFile(file, function (newFile){
+						if(newFile !== null){
+							usb.uploadFile(newFile.filepath, contents, function (result){
+								if(result.err === undefined){
+									return callback(newFile);
+								}
+								else{
+									// TODO hopefully this doesn't cause an error
+									deleteFile(newFile._id, function (result){});
+									return callback(result);
+								}
+							});
+						}
+						else{
+							return callback({'err':'Error creating file in database.'});
+						}
+					});
+				}
+				else{
+					return callback({'err': 'Parent directory does not exist.'});
+				}
+			});
+		}
+		else{
+			return callback({'err' : 'User does not have upload permissions for requested directory.'});
+		}
+	});
 };
 
-exports.setupWebStream = function (userId, fileId, callback){
+exports.setupWebStream = function (userId, groupId, fileId, callback){
 	// TODO verify user has access to the file
 
 	exports.getFile(userId, fileId, function (err, file){
@@ -297,16 +349,6 @@ exports.setupWebStream = function (userId, fileId, callback){
 			return callback({ 'err' : err});
 		}
 	})
-};
-
-// TODO implement
-exports.createFileStream = function (argument) {
-	// body...
-};
-
-// TODO implement
-exports.uploadFile = function (argument) {
-	// body...
 };
 
 var updateFile = function (file, callback){
@@ -358,3 +400,14 @@ var createFile = function (file, callback){
 		}
 	});
 }
+
+var deleteFile = function (fileId, callback){
+	File.remove({'_id': fileId}, function (err){
+		if(err){
+			return callback({'err':err});
+		}
+		else{
+			return callback({'success':'Successfully deleted file with id: ' + fileId});
+		}
+	});
+};
