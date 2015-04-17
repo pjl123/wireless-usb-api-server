@@ -5,6 +5,26 @@
 var auth = require('../modules/auth-handler');
 var users = require('../modules/user-handler');
 
+exports.createUserToken = function (request, response, next){
+    auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){
+        if(authenticated){
+            users.generateCreateUserToken(userId, function (responseData){
+                if(responseData.err !== undefined){
+                    response.status(400);
+                }
+                else{
+                    response.status(201);
+                }
+                response.jsonp(responseData);
+            });
+        }
+        else{
+            response.status(401);
+            response.jsonp({'err':'Please request new access token.'});
+        }
+    });
+}
+
 // Create a new user
 exports.create = function (request, response, next){
     auth.isAuthenticated(request.query.accessToken, function (authenticated, userId){

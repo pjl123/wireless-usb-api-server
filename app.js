@@ -166,6 +166,9 @@ app.get('/setupWebStream', fileRoutes.setupWebStream);
  * User Module
  */
 
+// Get the create user token
+app.get('/createUserToken', userRoutes.createUserToken);
+
 // Create a new user
 app.post('/users', jsonParser, userRoutes.create);
 

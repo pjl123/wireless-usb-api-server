@@ -27,37 +27,51 @@ exports.getUserByAccessToken = function (accessToken, callback){
 	});
 };
 
-exports.createUser = function (userId, userObj, callback) {
+exports.generateCreateUserToken = function (userId, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
-			console.log(userObj);
-			var user = new User();
-			if(userObj.name !== undefined){
-				user.name = userObj.name;
-			}
-			if(userObj.isAdmin !== undefined){
-				user.isAdmin = userObj.isAdmin;
-			}
-			if(userObj.canUpload !== undefined){
-				user.canUpload = userObj.canUpload;
-			}
-			if(userObj.canDownload !== undefined){
-				user.canDownload = userObj.canDownload;
-			}
-
-			user.save(function (err, newUser){
-				if(err){
-					return callback({'err': err});
-				}
-				else{
-					return callback(newUser);
-				}
-			});
+			// TODO make this a randomly generated string
+			return callback('userToken');
 		}
 		else{
-			return callback({'err': 'Admin priviledges required for "POST /users" call'});
+			return callback({'err': 'Admin priviledges required for "GET /createUserToken" call'});
 		}
 	});
+};
+
+exports.createUser = function (createUserToken, userObj, callback) {
+	// TODO Maintain some sort of list of active create user tokens to see if this is contained in it
+	if(createUserToken === 'userToken'){
+		var user = new User();
+		if(userObj.name !== undefined){
+			user.name = userObj.name;
+		}
+		if(userObj.isAdmin !== undefined){
+			user.isAdmin = userObj.isAdmin;
+		}
+		if(userObj.canUpload !== undefined){
+			user.canUpload = userObj.canUpload;
+		}
+		if(userObj.canDownload !== undefined){
+			user.canDownload = userObj.canDownload;
+		}
+		// Probably removing this field
+		if(userObj.accessToken !== undefined){
+			user.accessToken = userObj.accessToken;
+		}
+
+		user.save(function (err, newUser){
+			if(err){
+				return callback({'err': err});
+			}
+			else{
+				return callback(newUser);
+			}
+		}
+	}
+	else{
+		return callback({'err': 'Valid create user token required for "POST /users" call'});
+	}
 };
 
 // Gets user for the given id
@@ -241,7 +255,6 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 	});
 }
 
-// TODO implement
 exports.removeGroupsFromUser = function (userId, targetId, groupIds, flag, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
