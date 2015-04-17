@@ -168,7 +168,7 @@ app.get('/files/:id/download', fileRoutes.downloadFile);
 app.post('/files/:id/upload', fileRoutes.uploadFile);
 
 // Set up the web server file streaming
-app.get('/setupWebStream', fileRoutes.setupWebStream);
+app.get('/setupWebStream/:id', fileRoutes.setupWebStream);
 
 /*
  * User Module

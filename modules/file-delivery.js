@@ -337,18 +337,24 @@ exports.uploadFile = function (userId, groupId, parentId, filename, contents, ca
 };
 
 exports.setupWebStream = function (userId, groupId, fileId, callback){
-	// TODO verify user has access to the file
-
-	exports.getFile(userId, fileId, function (err, file){
-		if(!err){
-			usb.setupWebStream(file.filepath, function (data){
-				return callback(data);
+	// If user and file are in the group, set up the stream
+	groups.isUserInGroup(userId, groupId, function (inGroup){
+		if(inGroup){
+			File.findOne({'_id': fileId, 'groups' : { $in : [groupId] } }, function (err, file){
+				if(!err && file !== null){
+					usb.setupWebStream(file.filepath, function (data){
+						return callback(data);
+					});
+				}
+				else{
+					return callback({ 'err' : 'File not available.'});
+				}
 			});
 		}
 		else{
-			return callback({ 'err' : err});
+			return callback({'err':'User does not have permissions for the requested file.'});
 		}
-	})
+	});
 };
 
 var updateFile = function (file, callback){

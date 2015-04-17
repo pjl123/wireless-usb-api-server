@@ -118,6 +118,9 @@ exports.update = function (request, response, next){
 // Get the groups the given user is part of
 exports.getGroupsByUser = function (request, response, next){
     var userId = request.get('Authorization');
+    if(request.query.callback !== undefined){
+        userId = request.query.userId;
+    }
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
             groups.getGroupsByUser(userId, request.params.id, function (responseData){

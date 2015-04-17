@@ -92,6 +92,9 @@ exports.update = function (request, response, next){
 // Get the groups the given file belongs in
 exports.getFilesByGroup = function (request, response, next){
     var userId = request.get('Authorization');
+    if(request.query.callback !== undefined){
+        userId = request.query.userId;
+    }
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
             fileDelivery.getFilesByGroup(userId, request.params.id, function (responseData){
@@ -158,9 +161,12 @@ exports.uploadFile = function (request, response, next){
 
 exports.setupWebStream = function (request, response, next){
     var userId = request.get('Authorization');
+    if(request.query.callback !== undefined){
+        userId = request.query.userId;
+    }
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
-            fileDelivery.setupWebStream(userId, request.query.fileId, function (responseData){
+            fileDelivery.setupWebStream(userId, request.query.groupId, request.params.id, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }
