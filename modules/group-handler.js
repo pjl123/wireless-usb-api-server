@@ -4,9 +4,7 @@
  * Maintains group database
  */
 
-var userSchema = require('../schemas/user-schema');
 var groupSchema = require('../schemas/group-schema');
-var User = userSchema.User;
 var Group = groupSchema.Group;
 
 var users = require('./user-handler.js');

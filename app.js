@@ -30,6 +30,7 @@ var auth = require('./modules/auth-handler');
 var groupRoutes = require('./routes/group-routes');
 var userRoutes = require('./routes/user-routes');
 var fileRoutes = require('./routes/file-routes');
+var networkRoutes = require('./routes/network-routes');
 
 // Mongoose Schemas
 var User = require('./schemas/user-schema').User;
@@ -218,6 +219,7 @@ app.get('/groupsByFile/:id', groupRoutes.getGroupsByFile);
   * Network Module
   */
 
+app.get('/networkCredentials', networkRoutes.getCredentials);
 
 /*
  * Start it up

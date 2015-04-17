@@ -18,7 +18,7 @@ exports.getFileListing = function (request, response, next){
         }
         else{
             response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
+            response.jsonp({'err':'User not authorized.'});
         }
     });
 }
@@ -40,7 +40,7 @@ exports.get = function (request, response, next){
         }
         else{
             response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
+            response.jsonp({'err':'User not authorized.'});
         }
     });
 }
@@ -62,7 +62,7 @@ exports.getAll = function (request, response, next){
         }
         else{
             response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
+            response.jsonp({'err':'User not authorized.'});
         }
     });
 }
@@ -84,7 +84,7 @@ exports.update = function (request, response, next){
         }
         else{
             response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
+            response.jsonp({'err':'User not authorized.'});
         }
     });
 }
@@ -106,7 +106,7 @@ exports.getFilesByGroup = function (request, response, next){
         }
         else{
             response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
+            response.jsonp({'err':'User not authorized.'});
         }
     });
 }
@@ -133,7 +133,7 @@ exports.getSingleFile = function (request, response, next){
         }
         else{
             response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
+            response.jsonp({'err':'User not authorized.'});
         }
     });
 }
@@ -151,7 +151,7 @@ exports.setupWebStream = function (request, response, next){
         }
         else{
             response.status(401);
-            response.jsonp({'err':'Please request new access token.'});
+            response.jsonp({'err':'User not authorized.'});
         }
     });
 }
