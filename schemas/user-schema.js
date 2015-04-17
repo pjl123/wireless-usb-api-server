@@ -8,9 +8,6 @@ var userSchema = mongoose.Schema({
 		required: true,
 		unique: true
 	},
-	accessToken: {
-		type: String
-	},
 	isAdmin: {
 		type: Boolean,
 		default: false

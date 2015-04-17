@@ -18,12 +18,12 @@ exports.isAdmin = function (userId, callback) {
 	});
 };
 
-exports.getUserByAccessToken = function (accessToken, callback){
-	User.findOne({ 'accessToken': accessToken }, 'id', function (err, user){
+exports.isAuthorized = function (userId, callback){
+	User.findOne({ '_id': userId }, 'id', function (err, user){
 		if(err || user === null){
-			return callback(true, null);
+			return callback(false);
 		}
-		return callback(false, user.id);
+		return callback(true);
 	});
 };
 
@@ -31,7 +31,7 @@ exports.generateCreateUserToken = function (userId, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
 			// TODO make this a randomly generated string
-			return callback('userToken');
+			return callback({'createUserToken':'userToken'});
 		}
 		else{
 			return callback({'err': 'Admin priviledges required for "GET /createUserToken" call'});
@@ -67,7 +67,7 @@ exports.createUser = function (createUserToken, userObj, callback) {
 			else{
 				return callback(newUser);
 			}
-		}
+		});
 	}
 	else{
 		return callback({'err': 'Valid create user token required for "POST /users" call'});

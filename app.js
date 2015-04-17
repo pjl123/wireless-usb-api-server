@@ -91,6 +91,7 @@ conn.on('error', function (callback){
 conn.once('open', function (callback) {
     console.log('Connected to Mongo!');
     var admin = new User({
+        _id: '552ea5dac6ef4a5c19b242b0',
         name: 'admin',
         accessToken: 'foo',
         isAdmin: true
@@ -104,6 +105,7 @@ conn.once('open', function (callback) {
         }
     });
     var webUser = new User({
+        _id: '552ea5dac6ef4a5c19b242b1',
         name: 'webUser',
         accessToken: 'web'
     });
@@ -170,7 +172,7 @@ app.get('/setupWebStream', fileRoutes.setupWebStream);
 app.get('/createUserToken', userRoutes.createUserToken);
 
 // Create a new user
-app.post('/users', jsonParser, userRoutes.create);
+app.post('/users/:token', jsonParser, userRoutes.create);
 
 // Get single user by id
 app.get('/users/:id', userRoutes.get);
