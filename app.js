@@ -133,21 +133,14 @@ app.get('/', function (request, response, next) {
  * Authentication Module
  */
 
-app.get('/requestAccessToken', function (request, response, next){
-    auth.requestAccessToken(request.query.id, request.query.key, function (responseData){
-        if(responseData.err !== undefined){
-            response.status(400);
-        }
-        response.jsonp(responseData);
-    });
-});
-
 /*
  * File Delivery Module
  */
 
 // File id included in request query
 app.get('/fileListing/:id', fileRoutes.getFileListing);
+
+app.get('/fileListing', fileRoutes.getFileListing);
 
 // Get single file by id
 app.get('/files/:id', fileRoutes.get);
