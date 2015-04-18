@@ -28,6 +28,9 @@ exports.getFileListing = function (fileId, userId, callback){
 				usb.getFileListing(relPath, function (fileData){
 					var filesToReturn = { 'files':[] };
 					var numFiles = fileData.files.length;
+					if(numFiles <= 0){
+						return callback(filesToReturn);
+					}
 					for (var i = 0; i < fileData.files.length; i++) {
 						fileData.files[i].parentDirectory = parentDirectory;
 						createFile(fileData.files[i], function (newFile, filepath){
