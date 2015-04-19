@@ -314,6 +314,7 @@ exports.uploadFile = function (userId, groupId, parentId, filename, contents, ca
 						if(newFile !== null){
 							usb.uploadFile(newFile.filepath, contents, function (result){
 								if(result.err === undefined){
+									// TODO add the file to the given group
 									return callback(newFile);
 								}
 								else{
