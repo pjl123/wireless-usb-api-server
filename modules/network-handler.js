@@ -6,8 +6,8 @@ exports.getCredentials = function (userId, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
 			var network = {
-				'name': 'Hydra Test',
-				'password': 'HeilHydra'
+				'name': 'HydraTestNetwork',
+				'password': 'HailHydra'
 			};
 			return callback(network);
 		}
