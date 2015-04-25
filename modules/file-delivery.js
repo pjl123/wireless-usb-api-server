@@ -301,15 +301,22 @@ exports.uploadFile = function (userId, groupId, parentId, filename, contents, ca
 	groups.canUpload(userId, groupId, function (canUpload){
 		if(canUpload){
 			File.findOne({'_id':parentId}, function (err, parent){
-				if(!err){
-					var filepath = parent.filepath + '/' + filename;
+				console.log(parentId);
+				if(!err || parentId === 'null'){
+					var filepath = '';
+					if(parentId === 'null'){
+						filepath = filename;
+					}
+					else{
+						filepath = parent.filepath + '/' + filename;
+					}
 					// TODO how to do the file size?
 					var file = {
 						'filepath': filepath,
 						'isDirectory': false,
-						'parentDirectory': parentId,
 						'size': 0
 					};
+					file.parentDirectory = parentId === 'null' ? null : parentId;
 					createFile(file, function (newFile){
 						if(newFile !== null){
 							usb.uploadFile(newFile.filepath, contents, function (result){

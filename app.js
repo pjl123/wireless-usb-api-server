@@ -4,7 +4,7 @@
  * App Settings
  */
 var port = 3000;
-var mongoServer = 'mongodb://192.168.1.146/wireless-usb';
+var mongoServer = 'mongodb://192.168.1.250/wireless-usb';
 //var mongoServer = 'mongodb://192.168.42.1/wireless-usb';
 
 /*
@@ -43,6 +43,18 @@ var hbs;
 
 // For gzip compression
 app.use(express.compress());
+
+// Allows access of requests with content type text/plain
+app.use(function(req, res, next){
+  if (req.is('text/*')) {
+    req.text = '';
+    req.setEncoding('utf8');
+    req.on('data', function(chunk){ req.text += chunk });
+    req.on('end', next);
+  } else {
+    next();
+  }
+});
 
 /*
  * Config for Production and Development

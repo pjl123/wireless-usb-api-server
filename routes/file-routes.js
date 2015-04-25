@@ -145,7 +145,7 @@ exports.uploadFile = function (request, response, next){
     var userId = request.get('Authorization');
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
-            fileDelivery.uploadFile(userId, request.query.groupId, request.params.id, request.query.filename, request.body, function (responseData){
+            fileDelivery.uploadFile(userId, request.query.groupId, request.params.id, request.query.filename, request.text, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
                 }
