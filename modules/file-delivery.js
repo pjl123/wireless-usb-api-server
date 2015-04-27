@@ -77,8 +77,8 @@ exports.getFileListing = function (fileId, userId, callback){
 exports.getFile = function (userId, fileId, callback) {
 	users.isAdmin(userId, function (result){
 		if(result){
-			exports.getFileNoAdmin(fileId, function (file){
-				return callback(file);
+			exports.getFileNoAdmin(fileId, function (err, file){
+				return callback(err, file);
 			});
 		}
 		else{

@@ -130,7 +130,6 @@ exports.getGroupsByUser = function (request, response, next){
                 else{
                     response.status(200);
                 }
-                console.log(responseData);
                 response.jsonp(responseData);
             });
         }
@@ -153,7 +152,6 @@ exports.getGroupsByFile = function (request, response, next){
                 else{
                     response.status(200);
                 }
-                console.log(responseData);
                 response.jsonp(responseData);
             });
         }

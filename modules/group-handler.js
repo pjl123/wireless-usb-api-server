@@ -104,8 +104,8 @@ exports.getGroup = function (userId, groupId, callback) {
 	users.isAdmin(userId, function (isAdmin){
 		exports.isUserInGroup(userId, groupId, function (inGroup){
 			if(isAdmin || inGroup){
-				exports.getGroupNoAdmin(groupId, function (group){
-					return callback(group);
+				exports.getGroupNoAdmin(groupId, function (err, group){
+					return callback(err, group);
 				});
 			}
 			else{

@@ -87,8 +87,8 @@ exports.createUser = function (createUserToken, userObj, callback) {
 exports.getUser = function (userId, getId, callback) {
 	exports.isAdmin(userId, function (result){
 		if(result || userId === getId){
-			exports.getUserNoAdmin(getId, function (user){
-				return callback(user);
+			exports.getUserNoAdmin(getId, function (err, user){
+				return callback(err, user);
 			});
 		}
 		else{
