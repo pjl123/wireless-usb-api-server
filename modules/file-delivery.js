@@ -23,7 +23,7 @@ exports.getFileListing = function (fileId, userId, callback){
 					relPath = file.filepath;
 					// never store the usbDrive1 or usbDrive2 directories as parentDirectory references
 					if(file.filepath.indexOf('usbDrive1') < 0 && file.filepath.indexOf('usbDrive2') < 0)
-						parentDirectory = file.id;
+						parentDirectory = file._id;
 				}
 				usb.getFileListing(relPath, function (fileData){
 					var filesToReturn = { 'files':[] };
@@ -77,16 +77,8 @@ exports.getFileListing = function (fileId, userId, callback){
 exports.getFile = function (userId, fileId, callback) {
 	users.isAdmin(userId, function (result){
 		if(result){
-			File.findOne({'_id' : fileId}, function (err, file){
-				if(err){
-					return callback(true, {'err': err});
-				}
-				else if(file === null){
-					return callback(true, {'err': 'No file with given id: ' + fileId});
-				}
-				else{
-					return callback(err, file);
-				}
+			exports.getFileNoAdmin(fileId, function (file){
+				return callback(file);
 			});
 		}
 		else{
@@ -94,6 +86,20 @@ exports.getFile = function (userId, fileId, callback) {
 		}
 	});
 };
+
+exports.getFileNoAdmin = function (fileId, callback){
+	File.findOne({'_id' : fileId}, function (err, file){
+		if(err){
+			return callback(true, {'err': err});
+		}
+		else if(file === null){
+			return callback(true, {'err': 'No file with given id: ' + fileId});
+		}
+		else{
+			return callback(err, file);
+		}
+	});
+}
 
 exports.getAllFiles = function (userId, callback){
 		users.isAdmin(userId, function (result){
@@ -181,53 +187,8 @@ exports.getFilesByGroup = function (userId, groupId, callback){
 exports.addGroupsToFile = function (userId, fileId, groupIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			File.findOne({ '_id' : fileId }, function(err, file){
-				if(err){
-					return callback({'err':err});
-				}
-				else if(file === null){
-					return callback({'err':'File does not exist.'});
-				}
-				else{
-					// Add all groups and remove bad ids after save
-					for (var i = 0; i < groupIds.length; i++) {
-						try{
-							file.groups.addToSet(groupIds[i]);
-						}
-						catch(err){
-							// Should only catch ids being added that are not the right Mongo format
-							console.log("Error adding id: " + groupIds[i]);
-							groupIds.splice(i,1);
-						}
-					};
-					file.save(function (err, updatedFile){
-						if(err){
-							return callback({'err':err});
-						}
-						else{
-							for (var i = 0; i < groupIds.length; i++) {
-								var currGroup = groupIds[i]
-								groups.getGroup(userId, groupIds[i], function (err,group){
-									if(!err){
-										if(flag == 1){
-											// TODO shouldn't be an error, but what if?
-											groups.addFilesToGroup(userId, group.id, [fileId], 0, function(){});
-										}
-										// Make sure to add all the parent directories so that the file is accesible from the user interfaces.
-										if(file.parentDirectory !== null){
-											exports.addGroupsToFile(userId, file.parentDirectory, groupIds, 1, function(){});
-										}
-									}
-									else{
-										// Remove file if it doesn't exist
-										exports.removeGroupsFromFile(userId, fileId, [currGroup], 0, function(){});
-									}
-								});
-							}
-							return callback(updatedFile);
-						}
-					});
-				}
+			exports.addGroupsToFileNoAdmin(fileId, groupIds, flag, function (file){
+				return callback(file);
 			});
 		}
 		else{
@@ -239,37 +200,94 @@ exports.addGroupsToFile = function (userId, fileId, groupIds, flag, callback){
 exports.removeGroupsFromFile  = function (userId, fileId, removeGroupIds, flag, callback){
 	users.isAdmin(userId, function (result){
 		if(result){
-			exports.getFile(userId, fileId, function(err, file){
-				if(err){
-					return callback({'err':err});
-				}
-				else{
-					for (var i = 0; i < removeGroupIds.length; i++) {
-						if(flag == 1){
-							// TODO shouldn't be an error, but what if?
-							groups.removeFilesFromGroup(userId, removeGroupIds[i], [fileId], 0, function(){});
-						}
-						try{
-							file.groups.remove(removeGroupIds[i]);
-						}
-						catch(err){
-							return callback({'err':err});
-						}
-					}
-
-					file.save(function (err, updatedFile){
-						if(err){
-							return callback({'err':err});
-						}
-						else{
-							return callback(updatedFile);
-						}
-					});
-				}
+			exports.removeGroupsFromFileNoAdmin(fileId, removeGroupIds, flag, function (file){
+				return callback(file);
 			});
 		}
 		else{
 			return callback({'err': 'Admin priviledges required for "DELETE /groupsFromFile/:id" call'});
+		}
+	});
+}
+
+exports.addGroupsToFileNoAdmin = function (fileId, groupIds, flag, callback){
+	File.findOne({ '_id' : fileId }, function(err, file){
+		if(err){
+			return callback({'err':err});
+		}
+		else if(file === null){
+			return callback({'err':'File does not exist.'});
+		}
+		else{
+			// Add all groups and remove bad ids after save
+			for (var i = 0; i < groupIds.length; i++) {
+				try{
+					file.groups.addToSet(groupIds[i]);
+				}
+				catch(err){
+					// Should only catch ids being added that are not the right Mongo format
+					console.log("Error adding id: " + groupIds[i]);
+					groupIds.splice(i,1);
+				}
+			};
+			file.save(function (err, updatedFile){
+				if(err){
+					return callback({'err':err});
+				}
+				else{
+					for (var i = 0; i < groupIds.length; i++) {
+						var currGroup = groupIds[i]
+						groups.getGroupNoAdmin(groupIds[i], function (err,group){
+							if(!err){
+								if(flag == 1){
+									// TODO shouldn't be an error, but what if?
+									groups.addFilesToGroupNoAdmin(group._id, [fileId], 0, function(){});
+								}
+								// Make sure to add all the parent directories so that the file is accesible from the user interfaces.
+								if(file.parentDirectory !== null){
+									exports.addGroupsToFileNoAdmin(file.parentDirectory, groupIds, 1, function(){});
+								}
+							}
+							else{
+								// Remove file if it doesn't exist
+								exports.removeGroupsFromFileNoAdmin(fileId, [currGroup], 0, function(){});
+							}
+						});
+					}
+					return callback(updatedFile);
+				}
+			});
+		}
+	});
+}
+
+exports.removeGroupsFromFileNoAdmin = function (fileId, removeGroupIds, flag, callback){
+	File.findOne({'_id' : fileId}, function(err, file){
+		if(err){
+			return callback({'err':err});
+		}
+		else{
+			for (var i = 0; i < removeGroupIds.length; i++) {
+				if(flag == 1){
+					// TODO shouldn't be an error, but what if?
+					groups.removeFilesFromGroupNoAdmin(removeGroupIds[i], [fileId], 0, function(){});
+				}
+				try{
+					file.groups.remove(removeGroupIds[i]);
+				}
+				catch(err){
+					return callback({'err':err});
+				}
+			}
+
+			file.save(function (err, updatedFile){
+				if(err){
+					return callback({'err':err});
+				}
+				else{
+					return callback(updatedFile);
+				}
+			});
 		}
 	});
 }
@@ -321,8 +339,10 @@ exports.uploadFile = function (userId, groupId, parentId, filename, contents, ca
 						if(newFile !== null){
 							usb.uploadFile(newFile.filepath, contents, function (result){
 								if(result.err === undefined){
-									// TODO add the file to the given group
-									return callback(newFile);
+									// add the file to the given group
+									exports.addGroupsToFileNoAdmin(newFile._id, [groupId], 1, function (file){
+										return callback(file);
+									});
 								}
 								else{
 									// TODO hopefully this doesn't cause an error

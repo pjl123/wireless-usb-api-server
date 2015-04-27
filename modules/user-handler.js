@@ -55,16 +55,25 @@ exports.createUser = function (createUserToken, userObj, callback) {
 		if(userObj.canDownload !== undefined){
 			user.canDownload = userObj.canDownload;
 		}
-		// Probably removing this field
-		if(userObj.accessToken !== undefined){
-			user.accessToken = userObj.accessToken;
-		}
 
 		user.save(function (err, newUser){
 			if(err){
 				return callback({'err': err});
 			}
 			else{
+				try{
+					// Add or remove groups
+					if(userObj.addGroupIds !== undefined){
+						exports.addGroupsToUserNoAdmin(newUser._id, userObj.addGroupIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+					}
+
+					if(userObj.removeGroupIds !== undefined){
+						exports.removeGroupsFromUserNoAdmin(newUser._id, userObj.removeGroupIds, 1, function (data) {if(data.err !== undefined) throw data.err;});
+					}
+				}
+				catch(err){
+					return callback(err);
+				}
 				return callback(newUser);
 			}
 		});
@@ -78,16 +87,8 @@ exports.createUser = function (createUserToken, userObj, callback) {
 exports.getUser = function (userId, getId, callback) {
 	exports.isAdmin(userId, function (result){
 		if(result || userId === getId){
-			User.findOne({ '_id': getId }, function (err, user){
-				if(err){
-					return callback(true, {'err': err});
-				}
-				else if(user === null){
-					return callback(true, {'err': 'No user with given id: ' + getId});
-				}
-				else{
-					return callback(err, user);
-				}
+			exports.getUserNoAdmin(getId, function (user){
+				return callback(user);
 			});
 		}
 		else{
@@ -204,49 +205,8 @@ exports.getUsersByGroup = function (userId, groupId, callback){
 exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
-			User.findOne({ '_id' : targetId }, function(err, user){
-				if(err){
-					return callback({'err':err});
-				}
-				else if(user === null){
-					return callback({'err':'User does not exist.'});
-				}
-				else{
-					// Add all groups and remove bad ids after save
-					for (var i = 0; i < groupIds.length; i++) {
-						try{
-							user.groups.addToSet(groupIds[i]);
-						}
-						catch(err){
-							// Should only catch ids being added that are not the right Mongo format
-							console.log("Error adding id: " + groupIds[i]);
-							groupIds.splice(i,1);
-						}
-					};
-					user.save(function (err, updatedUser){
-						if(err){
-							return callback({'err':err});
-						}
-						else{
-							for (var i = 0; i < groupIds.length; i++) {
-								var currGroup = groupIds[i]
-								groups.getGroup(userId, groupIds[i], function (err,group){
-									if(!err){
-										if(flag == 1){
-											// TODO shouldn't be an error, but what if?
-											groups.addUsersToGroup(userId, group.id, [targetId], 0, function(){});
-										}
-									}
-									else{
-										// Remove user if it doesn't exist
-										exports.removeGroupsFromUser(userId, targetId, [currGroup], 0, function(){});
-									}
-								});
-							}
-							return callback(updatedUser);
-						}
-					});
-				}
+			addGroupsToUserNoAdmin(targetId, groupIds, flag, function (user){
+				return callback(user);
 			});
 		}
 		else{
@@ -258,41 +218,108 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 exports.removeGroupsFromUser = function (userId, targetId, groupIds, flag, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
-			User.findOne({ '_id' : targetId }, function(err, user){
-				if(err){
-					return callback({'err':err});
-				}
-				else if(user === null){
-					return callback({'err':'User does not exist.'});
-				}
-				else{
-					for (var i = 0; i < groupIds.length; i++) {
-						if(flag == 1){
-							// TODO shouldn't be an error, but what if?
-							groups.removeUsersFromGroup(userId, groupIds[i], [targetId], 0, function(){});
-						}
-
-						try{
-							user.groups.remove(groupIds[i]);
-						}
-						catch(err){
-							return callback({'err':err});
-						}
-					}
-
-					user.save(function (err, updatedUser){
-						if(err){
-							return callback({'err':err});
-						}
-						else{
-							return callback(updatedUser);
-						}
-					});
-				}
+			removeGroupsFromUserNoAdmin(targetId, groupIds, flag, function (user){
+				return callback(user);
 			});
 		}
 		else{
 			return callback({'err': 'Admin priviledges required for "DELETE /groupsFromUser/:id" call'});
+		}
+	});
+}
+
+exports.getUserNoAdmin = function (getId,  callback){
+	User.findOne({ '_id': getId }, function (err, user){
+		if(err){
+			return callback(true, {'err': err});
+		}
+		else if(user === null){
+			return callback(true, {'err': 'No user with given id: ' + getId});
+		}
+		else{
+			return callback(err, user);
+		}
+	});
+}
+
+exports.addGroupsToUserNoAdmin = function (targetId, groupIds, flag, callback){
+	User.findOne({ '_id' : targetId }, function(err, user){
+		if(err){
+			return callback({'err':err});
+		}
+		else if(user === null){
+			return callback({'err':'User does not exist.'});
+		}
+		else{
+			// Add all groups and remove bad ids after save
+			for (var i = 0; i < groupIds.length; i++) {
+				try{
+					user.groups.addToSet(groupIds[i]);
+				}
+				catch(err){
+					// Should only catch ids being added that are not the right Mongo format
+					console.log("Error adding id: " + groupIds[i]);
+					groupIds.splice(i,1);
+				}
+			};
+			user.save(function (err, updatedUser){
+				if(err){
+					return callback({'err':err});
+				}
+				else{
+					for (var i = 0; i < groupIds.length; i++) {
+						var currGroup = groupIds[i]
+						groups.getGroupNoAdmin(groupIds[i], function (err,group){
+							if(!err){
+								if(flag == 1){
+									// TODO shouldn't be an error, but what if?
+									groups.addUsersToGroupNoAdmin(group._id, [targetId], 0, function(){});
+								}
+							}
+							else{
+								// Remove user if it doesn't exist
+								exports.removeGroupsFromUserNoAdmin(targetId, [currGroup], 0, function(){});
+							}
+						});
+					}
+					return callback(updatedUser);
+				}
+			});
+		}
+	});
+}
+
+exports.removeGroupsFromUserNoAdmin = function (targetId, groupIds, flag, callback){
+	User.findOne({ '_id' : targetId }, function(err, user){
+		if(err){
+			return callback({'err':err});
+		}
+		else if(user === null){
+			return callback({'err':'User does not exist.'});
+		}
+		else{
+			for (var i = 0; i < groupIds.length; i++) {
+				if(flag == 1){
+					// TODO shouldn't be an error, but what if?
+					groups.removeUsersFromGroupNoAdmin(groupIds[i], [targetId], 0, function(){});
+				}
+
+				try{
+					user.groups.remove(groupIds[i]);
+				}
+				catch(err){
+					return callback({'err':err});
+				}
+			}
+
+			user.save(function (err, updatedUser){
+				if(err){
+					return callback({'err':err});
+				}
+				else{
+					return callback(updatedUser);
+				}
+			});
 		}
 	});
 }
