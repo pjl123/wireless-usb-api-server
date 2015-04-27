@@ -368,7 +368,7 @@ exports.addUsersToGroupNoAdmin = function (groupId, addUserIds, flag, callback){
 	});
 }
 
-exports.removeUsersFromGroupNoAdmin = function (groupId, removeFileIds, flag, callback){
+exports.removeUsersFromGroupNoAdmin = function (groupId, removeUserIds, flag, callback){
 	Group.findOne({ '_id' : groupId }, function(err, group){
 		if(err){
 			return callback({'err':err});
