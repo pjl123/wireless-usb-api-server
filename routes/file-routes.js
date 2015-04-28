@@ -3,6 +3,7 @@
  */
  var auth = require('../modules/auth-handler');
  var fileDelivery = require('../modules/file-delivery');
+ var fs = require('fs');
 
 // Relative file path included in request query
 exports.getFileListing = function (request, response, next){
@@ -115,6 +116,7 @@ exports.getFilesByGroup = function (request, response, next){
 }
 
 exports.downloadFile = function (request, response, next){
+    fs.appendFile('downloadTimes.txt', 'S,' + Date.now() + ',' + request.params.id + "\n", function (err) {});
     var userId = request.get('Authorization');
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
@@ -125,8 +127,12 @@ exports.downloadFile = function (request, response, next){
                     });
                     responseData.on('error', function(err){
                         response.status(400);
+                        fs.appendFile('downloadTimes.txt', 'E,' + Date.now() + ',' + request.params.id + "\n", function (err) {});
                         response.jsonp(err);
-                    })
+                    });
+                    responseData.on('end', function(){
+                        fs.appendFile('downloadTimes.txt', 'C,' + Date.now() + ',' + request.params.id + "\n", function (err) {});
+                    });
                 }
                 else{
                     response.status(400);
@@ -142,12 +148,17 @@ exports.downloadFile = function (request, response, next){
 }
 
 exports.uploadFile = function (request, response, next){
+    fs.appendFile('uploadTimes.txt', 'S,' + Date.now() + ',' + request.query.filename + "\n", function (err) {});
     var userId = request.get('Authorization');
     auth.isAuthorized(userId, function (authorized){
         if(authorized){
             fileDelivery.uploadFile(userId, request.query.groupId, request.params.id, request.query.filename, request.text, function (responseData){
                 if(responseData.err !== undefined){
                     response.status(400);
+                    fs.appendFile('uploadTimes.txt', 'E,' + Date.now() + ',' + request.query.filename + "\n", function (err) {});
+                }
+                else{
+                    fs.appendFile('uploadTimes.txt', 'C,' + Date.now() + ',' + request.query.filename + "\n", function (err) {});
                 }
                 response.jsonp(responseData);
             });
