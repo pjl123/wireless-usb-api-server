@@ -7,7 +7,7 @@
 // TODO update to the actual path on the Raspberry Pi
 var usbPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design';
 // TODO set path of Raspberry Pi for serving files
-var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-web-server/app/audio';
+var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-web-server/app/content';
 var fs = require('fs');
 
 exports.getFileListing = function (relPath, callback) {
@@ -82,22 +82,27 @@ exports.uploadFile = function (relPath, contents, callback){
   });
 };
 
-exports.setupWebStream = function (relPath, callback){
+exports.setupWebStream = function (relPath, newName, callback){
   if((relPath.trim()).length === 0){
     return callback({'err':'no filepath given'});
   }
 
   var filepath = usbPath + '/' + relPath;
   var temp = relPath.split('/');
-  var filename = temp[temp.length - 1];
-
-  // TODO check file size before sending to make sure it's not too large.
-  // Also make sure the file does not already exist there.
+  var fileType = temp[temp.length - 1].split('.')[1];
+  var filename = newName + '.' + fileType;
+  var webpath = serverPath + '/' + filename;
   try{
-    fs.createReadStream(filepath).pipe(fs.createWriteStream(serverPath + '/' + filename));
+    var stats = fs.statSync(webpath);
   }
   catch (err){
-    console.log(err);
+    // If the error is that the file doesn't exist, then copy it
+    if(err.errno === 34){
+      fs.createReadStream(filepath).pipe(fs.createWriteStream(webpath));
+    }
+    else if(err.errno !== undefined){
+      return callback(err);
+    }
   }
   return callback({'filename':filename});
 };

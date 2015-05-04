@@ -171,12 +171,14 @@ exports.getFilesByGroup = function (userId, groupId, callback){
 									filesToReturn.files.push(updatedFile);
 								}
 								numFiles --;
-								if(numFiles <= 0)
+								if(numFiles <= 0){
 									return callback(filesToReturn);
+								}
 							});
 						}
-						if(numFiles <= 0)
+						if(numFiles <= 0){
 							return callback(filesToReturn);
+						}
 					}
 				});
 			}
@@ -373,9 +375,15 @@ exports.setupWebStream = function (userId, groupId, fileId, callback){
 		if(inGroup){
 			File.findOne({'_id': fileId, 'groups' : { $in : [groupId] } }, function (err, file){
 				if(!err && file !== null){
-					usb.setupWebStream(file.filepath, function (data){
-						return callback(data);
-					});
+					// Don't transfer if it's more than 100 MB
+			    if(file.size >= 80000000){
+			      return callback({'err':'File too large to stream.'});
+			    }
+			    else{
+						usb.setupWebStream(file.filepath, file._id, function (data){
+							return callback(data);
+						});
+					}
 				}
 				else{
 					return callback({ 'err' : 'File not available.'});
@@ -409,6 +417,9 @@ var updateFile = function (file, callback){
 				return callback(stats);
 			}
 		});
+	}
+	else{
+		return callback(file);
 	}
 }
 
