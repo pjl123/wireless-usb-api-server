@@ -205,7 +205,7 @@ exports.getUsersByGroup = function (userId, groupId, callback){
 exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
-			addGroupsToUserNoAdmin(targetId, groupIds, flag, function (user){
+			exports.addGroupsToUserNoAdmin(targetId, groupIds, flag, function (user){
 				return callback(user);
 			});
 		}
@@ -218,7 +218,7 @@ exports.addGroupsToUser = function (userId, targetId, groupIds, flag, callback){
 exports.removeGroupsFromUser = function (userId, targetId, groupIds, flag, callback){
 	exports.isAdmin(userId, function (result){
 		if(result){
-			removeGroupsFromUserNoAdmin(targetId, groupIds, flag, function (user){
+			exports.removeGroupsFromUserNoAdmin(targetId, groupIds, flag, function (user){
 				return callback(user);
 			});
 		}
