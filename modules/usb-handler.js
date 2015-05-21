@@ -4,10 +4,10 @@
 	Performs all I/O operations on the USB drive
 */
 
-// TODO update to the actual path on the Raspberry Pi
-var usbPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design';
-// TODO set path of Raspberry Pi for serving files
-var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-web-server/app/content';
+var usbPath = '/home/pi/UsbDrives';
+//var usbPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design';
+var serverPath = '/home/pi/wireless-usb-file-server/app/content';
+//var serverPath = 'C:/Users/Patrick.pat-PC/Documents/School/Senior Design/wireless-usb-web-server/app/content';
 var fs = require('fs');
 
 exports.getFileListing = function (relPath, callback) {

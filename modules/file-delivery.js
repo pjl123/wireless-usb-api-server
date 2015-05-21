@@ -162,6 +162,9 @@ exports.getFilesByGroup = function (userId, groupId, callback){
 					if(err){
 						return callback({'err':err});
 					}
+					else if(files.length === 0){
+						return callback({'files':[]});
+					}
 					else{
 						var numFiles = files.length;
 						var filesToReturn = {'files':[]};
@@ -175,9 +178,6 @@ exports.getFilesByGroup = function (userId, groupId, callback){
 									return callback(filesToReturn);
 								}
 							});
-						}
-						if(numFiles <= 0){
-							return callback(filesToReturn);
 						}
 					}
 				});
